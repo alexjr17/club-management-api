@@ -24,9 +24,10 @@ return new class extends Migration
             $table->unsignedBigInteger('sede_id')->nullable();
             $table->unsignedBigInteger('usuario_admin_id');
             $table->string('ciudad');
-            $table->string('database_connection');
+            $table->string('database_connection')->nullable();
             $table->string('referencia')->nullable();
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('usuario_admin_id')->references('id')->on('usuarios');
         });

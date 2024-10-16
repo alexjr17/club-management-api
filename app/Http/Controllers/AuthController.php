@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\LogHelper;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,36 +13,17 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail; // Importar la fachada de Mail
 use App\Mail\ResetPasswordMail; // Asegúrate de tener este Mail creado
+use App\Models\ClubDeportivo\Club;
+use App\Models\Role;
+use App\Models\UserRole;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
     //
-    public function register (Request $request) {
-        // return response()->json(['alex'], 200);
-
-        $rules = [
-            "rol_id" => 'required',
-            "nombre" => 'required|min:3|max:20',
-            "apellido" => 'required',
-            // "foto" => 'required',
-            "tipo_documento" => 'required',
-            "numero_documento" => 'required',
-            "usuario" => [
-                'required',
-                'min:3',
-                'max:20',
-                'unique:users,usuario',
-                'regex:/^[a-zA-Z0-9-_\.]+$/',
-            ],
-            "email" => 'required|email|unique:users,email',
-            "password" => 'required|min:8',
-            // "telefono" => 'require',
-            // "direccion" => 'require',
-            // "imagen" => 'require',
-        ];
-        // return response()->json($request->all());
-
+    public function register(Request $request)
+    {
         $messages = [
             'username.regex' => 'El campo usuario solo puede contener letras, números, guiones bajos y puntos.',
             'username.min' => 'El campo usuario debe tener al menos 3 caracteres.',
@@ -49,59 +31,126 @@ class AuthController extends Controller
             'username.unique' => 'El usuario ya está en uso.',
         ];
 
-        $validator = Validator::make($request->all(), $rules, $messages);
+        $rules = ($request->has('step') && $request->step == 1) ? User::$rulesStep1 : User::$rules; //definir las validades para el step1 y step2
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors(), 'status' => 400], 200);
+        $request->validate($rules); //validar campos
+        // $validator = Validator::make($request->all(), $rules);
+        // if ($validator->fails()) return response()->json(['errors' => $validator->errors(), 'status' => 400]);
+
+        if ($request->has('step') && $request->step === 1) {
+            return response()->json(['status' => 200, "message" => 'Validation success']);
+        };
+
+        // Inicia la transacción
+        DB::beginTransaction();
+
+        try {
+            $user = User::create([
+                'rol_id' => $request->rol_id,
+                'nombre' => $request->nombre,
+                'apellido' => $request->apellido,
+                "tipo_documento" => $request->tipo_documento,
+                "numero_documento" => $request->numero_documento,
+                'usuario' => $request->usuario,
+                'email' => $request->email,
+                'password' => Hash::make($request->password)
+            ]);
+
+            // Iniciar sesión automáticamente
+            auth()->login($user);
+            $user_logged = auth()->user();
+
+            $token = JWTAuth::claims(["user_id" => $user->id, "rol_id" => null, "club_id" => null])->fromUser($user_logged);
+
+            // Confirma la transacción
+            DB::commit();
+            return response()->json(['token' => $token, 'user' => $user_logged], 200);
+        } catch (\Throwable $th) {
+            // Revierte la transacción si algo falla
+            DB::rollBack();
+            return response()->json(['errors' => $th->getMessage(), 'status' => 500]);
         }
-
-
-        $user = User::create([
-            'rol_id' => $request->rol_id,
-            'nombre' => $request->nombre,
-            'apellido' => $request->apellido,
-            "tipo_documento" => $request->tipo_documento,
-            "numero_documento" => $request->numero_documento,
-            'usuario' => $request->usuario,
-            'email' => $request->email,
-            'password' => Hash::make($request->password)
-        ]);
-
-        auth()->login($user);
-        $user_logged = auth()->user();
-
-        $token = JWTAuth::claims(["user_id" => $user->id, "rol_user" => $user->rol_id])->fromUser($user_logged);
-
-        return response()->json(['token' => $token, 'user' => $user_logged], 201);
-
     }
 
-    public function login(Request $request) {
+    public function login(Request $request)
+    {
+        try {
+            DB::beginTransaction();
 
-        $rules = [ 'password' => 'required|min:8'];
-        $request->has('usuario') ? $rules['usuario'] = 'required|string' : $rules['email'] = 'required|email';
+            $rules = [
+                'password' => 'required|string|min:8',
+            ];
 
-        $validator = Validator::make($request->all(), $rules);
+            if ($request->has('usuario')) {
+                $rules['usuario'] = 'required|string';
+            } else {
+                $rules['email'] = 'required|email';
+            }
 
-        if($validator->fails()){
-            return response()->json(["error" => $validator->errors(), 400]);
+            $validator = Validator::make($request->all(), $rules);
+
+            if ($validator->fails()) {
+                return response()->json(["error" => $validator->errors()], 400);
+            }
+
+            $credentials = $request->only($request->has('usuario') ? 'usuario' : 'email', 'password');
+
+            if (!auth()->attempt($credentials)) {
+                return response()->json(['error' => 'Credenciales incorrectas'], 401);
+            }
+
+            $user = auth()->user();
+
+            $userData = User::with([
+                'roles.permissions', // Cargar los roles del usuario con sus permisos
+                'clubs', // Todos los clubes asociados al usuario
+                'club' // El club principal donde es administrador
+            ])->findOrFail($user->id);
+
+            // Obtener el club principal si existe
+            $club = $userData->club->first() ?? null;
+            $clubs = $userData->clubs ?? null;
+            $roles = $userData->roles ?? null;
+            $rol = $roles->first() ?? null;
+            $rol_permiso = $rol ? $rol->permissions->unique() : null;
+            $roles_permisos = $roles ? $roles->flatMap->permissions->unique() : null;
+
+            // Obtener la cantidad de integrantes del club específico agrupados por rol
+            $integrantes_club = DB::table('roles_usuarios') // Usamos DB::table para acceder directamente a la tabla sin crear modelos
+                ->where('club_id', $club->id) // Filtrar por el ID del club
+                ->join('roles', 'roles_usuarios.rol_id', '=', 'roles.id') // Unir con la tabla de roles
+                ->groupBy('roles.id', 'roles.nombre') // Agrupar por ID del rol y nombre del rol
+                ->selectRaw('roles.nombre as rol, COUNT(*) as count') // Seleccionar el nombre del rol y el conteo de usuarios
+                ->get(); // Obtener los resultados
+
+            return response()->json($integrantes_club);
+
+            $token = JWTAuth::claims([
+                "user_id" => $user->id,
+                "rol_user" => $user->rol_id,
+                "club_id" => $club->id
+            ])->fromUser($user);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Inicio de sesión exitoso',
+                'token' => $token,
+                // 'user' => $userData,
+                'user' => auth()->user(),
+                'club' => $club,
+                'clubs' => $clubs,
+                'roles' => $roles,
+                'rol' => $rol,
+                'permisos' => $rol_permiso,
+                'roles_permisos' => $roles_permisos,
+                'integrantes_club' => $integrantes_club
+            ]);
+        } catch (\Exception $th) {
+            DB::rollBack();
+            // LogHelper::LogRegister('error_Login', 'Club', 0, $th->getMessage() . ' - line: ' . $th->getLine());
+            return response()->json(['error' => 'Ocurrió un error durante el inicio de sesión', 'message' => $th->getMessage()], 500);
         }
-
-        //credenciales usaurio y password en el request
-        if(!auth()->attempt($request->all())){
-            return response()->json(['error' => 'Credenciales incorrectas'], 401);
-        }
-
-        $user_logged = auth()->user();
-
-        $token = JWTAuth::claims(["user_id" => $user_logged->id, "rol_user" => $user_logged->rol_id])->fromUser($user_logged);
-
-        // Retornamos el token si es exitoso
-        return response()->json([
-            'message' => 'Inicio de sesión exitoso',
-            'token' => $token,
-            'user' => auth()->user(),
-        ]);
     }
 
     public function sendResetLinkEmail(Request $request)
@@ -129,7 +178,8 @@ class AuthController extends Controller
         return response()->json(['message' => 'La nueva contraseña ha sido enviada al correo electrónico.'], 200);
     }
 
-    public function generateRandomPassword($length = 12) {
+    public function generateRandomPassword($length = 12)
+    {
         if ($length < 8) {
             throw new Exception("La longitud mínima de la contraseña debe ser de 8 caracteres.");
         }

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\ClubDeportivo;
 use App\Helpers\LogHelper;
 use App\Http\Controllers\Controller;
 use App\Models\ClubDeportivo\Club;
+use App\Models\Role;
+use App\Models\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -34,8 +36,8 @@ class ClubController extends Controller
     public function store(Request $request)
     {
         // Validar los datos entrantes
-        $validator = Validator::make($request->all(), array_merge(Club::$rules, Club::$rulesImagen));
-        if ($validator->fails()) return response()->json(['message' => $validator->errors()->first(), 'code' => 400]);
+        $validator = Validator::make($request->all(), Club::$rules);
+        if ($validator->fails()) return response()->json(['message' => $validator->errors()->first(), 'code' => 400], 400);
 
         // Iniciar una transacción
         DB::beginTransaction();
@@ -45,19 +47,36 @@ class ClubController extends Controller
             $userId = auth()->id() ?? 1;
 
             // Crear el club
-            $club = Club::createsd([
+            $club = Club::create([
+                'referencia' => $request->referencia,
                 'nombre' => $request->nombre,
                 'ciudad' => $request->ciudad,
                 'direccion' => $request->direccion,
                 'correo' => $request->correo,
                 'user_id' => $userId, // Asignar el usuario autenticado
                 'telefono' => $request->telefono,
+                'fecha_fundacion' => $request->fecha_fundacion,
+                'usuario_admin_id' => $request->usuario_admin_id,
                 // 'foto' => $request->file('foto')->store('imagenes_clubes', 'public'), // Guardar la imagen
             ]);
 
+            if ($club) {
+                $userRole = UserRole::create([
+                    'usuario_id' => $userId,
+                    'rol_id' => 1,
+                    'club_id' => $club->id
+                ]);
+                // Carga la relación 'role' en la instancia recién creada
+                $userRole->load('role.permissions'); // Carga las relaciones anidadas
+
+                // Ahora puedes acceder a la relación role y sus permisos
+                $role = $userRole->role; // Obtiene la relación role
+                $permissions = $role->permissions; // Obtiene los permisos del rol
+            }
+
             // Confirmar la transacción
             DB::commit();
-            return response()->json($club, 201);
+            return response()->json(['club' => $club, 'rol' => $userRole, 'status' => 'success'], 200);
         } catch (\Exception $th) {
             DB::rollBack();
 

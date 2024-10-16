@@ -20,8 +20,9 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->tinyInteger('estado')->default(1);
-            $table->string('nombre_usuario')->unique();
+            $table->string('nombre_usuario')->default();
             $table->string('telefono')->nullable();
+            $table->string('pais')->nullable();
             $table->string('ciudad')->nullable();
             $table->enum('tipo_documento', ['CC', 'TI', 'CE']);
             $table->string('numero_documento')->unique();

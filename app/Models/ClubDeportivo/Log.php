@@ -10,7 +10,7 @@ class Log extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'tbl_logs'; // Cambia esto si tu tabla tiene un nombre diferente
+    protected $table = 'logs'; // Cambia esto si tu tabla tiene un nombre diferente
     protected $primaryKey = 'id'; // Clave primaria
 
     protected $fillable = [
