@@ -14,10 +14,15 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail; // Importar la fachada de Mail
 use App\Mail\ResetPasswordMail; // Asegúrate de tener este Mail creado
 use App\Models\ClubDeportivo\Club;
+use App\Models\ClubDeportivo\ClubPayment;
+use App\Models\ClubDeportivo\Inventory;
+use App\Models\ClubDeportivo\Membership;
 use App\Models\Role;
 use App\Models\UserRole;
 use Exception;
 use Illuminate\Support\Facades\DB;
+
+use function PHPSTORM_META\type;
 
 class AuthController extends Controller
 {
@@ -101,34 +106,81 @@ class AuthController extends Controller
 
             $user = auth()->user();
 
-            $userData = User::with([
-                'roles.permissions', // Cargar los roles del usuario con sus permisos
-                'clubs', // Todos los clubes asociados al usuario
-                'club' // El club principal donde es administrador
-            ])->findOrFail($user->id);
+            sleep(1);
+
+            // Cargar las relaciones necesarias en el usuario autenticado
+            $userData = $user->load([
+                'roles.permissions',
+                'clubs',
+                'club.inventories',
+                'club.memberships.clubPayments'
+            ]);
+
+            /*$userData = User::with([ //codigo importante no borrar
+                'roles.permissions',
+                'clubs',
+                'club.inventories',
+                'club.memberships.clubPayments'
+            ])->findOrFail($user->id);*/
 
             // Obtener el club principal si existe
             $club = $userData->club->first() ?? null;
-            $clubs = $userData->clubs ?? null;
+            $membresiasConEstadisticas = null;
+            $estadisticasGenerales = null;
+
+            if ($club) {
+                /*$membresiasConEstadisticas = $club->memberships->map(function ($membresia) { //codigo importante no borrar
+                    $pagos = $membresia->clubPayments;
+                    return [
+                        'id' => $membresia->id,
+                        'nombre' => $membresia->nombre,
+                        'descripcion' => $membresia->descripcion,
+                        'precio' => $membresia->precio,
+                        'duracion_dias' => $membresia->duracion_dias,
+                        'estadisticas_pagos' => [
+                            'total_monto' => $pagos->sum('monto'),
+                            'cantidad_pagos' => $pagos->count(),
+                            'desglose_por_estado' => $pagos->groupBy('estado')->map(function ($grupo) {
+                                return [
+                                    'cantidad' => $grupo->count(),
+                                    'suma_monto' => $grupo->sum('monto')
+                                ];
+                            })
+                        ],
+                    ];
+                });*/
+
+                // Función para sumar pagos por estado para todas las membresías
+                $sumarPagosPorEstado = function ($estado) use ($club) {
+                    return $club->memberships->flatMap->clubPayments
+                        ->where('estado', $estado)
+                        ->sum('monto');
+                };
+
+                $estadisticasGenerales = [
+                    'total_pagos_completados' => $sumarPagosPorEstado('completado'),
+                    /*'total_pagos_pendientes' => $sumarPagosPorEstado('pendiente'), //codigo importatnte no borrar
+                    'total_pagos_fallidos' => $sumarPagosPorEstado('fallido'),*/
+                ];
+            }
+
+            $club_inventario = $club ? $club->inventories->count() : null;
+            // $clubs = $userData->clubs ?? null; //codigo importante no borrar
+
             $roles = $userData->roles ?? null;
             $rol = $roles->first() ?? null;
             $rol_permiso = $rol ? $rol->permissions->unique() : null;
-            $roles_permisos = $roles ? $roles->flatMap->permissions->unique() : null;
+            // $roles_permisos = $roles ? $roles->flatMap->permissions->unique() : null; //codigo importatnte no borrar
 
-            // Obtener la cantidad de integrantes del club específico agrupados por rol
-            $integrantes_club = DB::table('roles_usuarios') // Usamos DB::table para acceder directamente a la tabla sin crear modelos
-                ->where('club_id', $club->id) // Filtrar por el ID del club
-                ->join('roles', 'roles_usuarios.rol_id', '=', 'roles.id') // Unir con la tabla de roles
-                ->groupBy('roles.id', 'roles.nombre') // Agrupar por ID del rol y nombre del rol
-                ->selectRaw('roles.nombre as rol, COUNT(*) as count') // Seleccionar el nombre del rol y el conteo de usuarios
-                ->get(); // Obtener los resultados
-
-            return response()->json($integrantes_club);
+            $integrantes_club = $club ? $this->integrantes($club->id, $rol->id) : null;
+            if ($integrantes_club) {
+                $integrantes_club['inventario'] = $club_inventario;
+            }
 
             $token = JWTAuth::claims([
                 "user_id" => $user->id,
                 "rol_user" => $user->rol_id,
-                "club_id" => $club->id
+                "club_id" => $club->id ?? null
             ])->fromUser($user);
 
             DB::commit();
@@ -136,21 +188,53 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Inicio de sesión exitoso',
                 'token' => $token,
-                // 'user' => $userData,
                 'user' => auth()->user(),
                 'club' => $club,
-                'clubs' => $clubs,
-                'roles' => $roles,
+                // 'clubs' => $clubs,
+                // 'roles' => $roles,
                 'rol' => $rol,
                 'permisos' => $rol_permiso,
-                'roles_permisos' => $roles_permisos,
-                'integrantes_club' => $integrantes_club
-            ]);
+                // 'roles_permisos' => $roles_permisos, //codigo importatnte no borrar
+                'integrantes_club' => $integrantes_club ?? [],
+                // 'membresias_estadisticas' => $membresiasConEstadisticas,
+                'estadisticas_generales' => $estadisticasGenerales
+            ], 200);
         } catch (\Exception $th) {
             DB::rollBack();
-            // LogHelper::LogRegister('error_Login', 'Club', 0, $th->getMessage() . ' - line: ' . $th->getLine());
             return response()->json(['error' => 'Ocurrió un error durante el inicio de sesión', 'message' => $th->getMessage()], 500);
         }
+    }
+
+    public function integrantes($clud_id, $rol_id)
+    {
+        if ($clud_id && $rol_id) {
+            // Obtener la cantidad de integrantes del club específico agrupados por rol
+            $integrantes_club = DB::table('roles_usuarios') // Usamos DB::table para acceder directamente a la tabla sin crear modelos
+                ->where('club_id', $clud_id) // Filtrar por el ID del club
+                ->where('rol_id', '!=', $rol_id)
+                ->join('roles', 'roles_usuarios.rol_id', '=', 'roles.id') // Unir con la tabla de roles
+                ->groupBy('roles.id', 'roles.nombre') // Agrupar por ID del rol y nombre del rol
+                ->selectRaw('roles.nombre as rol, COUNT(*) as count') // Seleccionar el nombre del rol y el conteo de usuarios
+                ->get()
+                ->pluck('count', 'rol')
+                ->toArray();
+        }
+        $roles_existentes = DB::table('roles')
+            ->where('id', '!=', $rol_id ?? '')
+            ->select('nombre')
+            ->union(
+                DB::table('roles_personalizados')
+                    ->where('club_id', '=', $clud_id)
+                    ->select('nombre')
+            )
+            ->get()
+            ->pluck('nombre')
+            ->mapWithKeys(function ($item) {
+                return [$item => 0];
+            })
+            ->toArray();
+        // Combinar ambos arrays, dando prioridad a las cantidades de integrantes del club
+        return array_merge($roles_existentes, $integrantes_club) ?? [];
     }
 
     public function sendResetLinkEmail(Request $request)

@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Illuminate\Support\Facades\Storage;
 
 class Club extends Model
 {
@@ -30,7 +30,7 @@ class Club extends Model
     ];
 
     public static $rules = [
-        'foto' => 'nullable|image|max:2048',
+        // 'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         'nombre' => 'required|string|max:255',
         'direccion' => 'required|string|max:255',
         'barrio' => 'nullable|string|max:255',
@@ -43,6 +43,16 @@ class Club extends Model
         'ciudad' => 'required|string|max:255',
         'referencia' => 'nullable|string|max:255',
     ];
+
+    protected $appends = ['foto_url'];
+
+    public function getFotoUrlAttribute()
+    {
+        if ($this->foto) {
+            return asset(Storage::url($this->foto));
+        }
+        return null;
+    }
 
     public function getDatabaseConnection()
     {

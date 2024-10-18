@@ -32,6 +32,6 @@ class Membership extends Model
 
     public function clubPayments()
     {
-        return $this->hasMany(ClubPayment::class);
+        return $this->hasMany(ClubPayment::class, 'membresia_id');
     }
 }

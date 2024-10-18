@@ -27,7 +27,7 @@ Route::post('password/reset', [AuthController::class, 'reset']);
 
 // Route::group(['middleware' => 'auth:api'], function () {
 //     Route::group(['middleware' => 'user.connection'], function () {
-        Route::Post('clubs', [ClubController::class, 'store']);
+        Route::post('clubs', [ClubController::class, 'store']);
         Route::put('clubs/{id}', [ClubController::class, 'update']);
         Route::get('clubs/{id}', [ClubController::class, 'show']);
 //     });

@@ -35,6 +35,7 @@ class ClubController extends Controller
     // Crear un nuevo club
     public function store(Request $request)
     {
+
         // Validar los datos entrantes
         $validator = Validator::make($request->all(), Club::$rules);
         if ($validator->fails()) return response()->json(['message' => $validator->errors()->first(), 'code' => 400], 400);
@@ -44,20 +45,36 @@ class ClubController extends Controller
 
         try {
             // Obtener el ID del usuario autenticado
-            $userId = auth()->id() ?? 1;
+            $userId = 1;
 
-            // Crear el club
+            // Manejar la subida de la imagen
+            $rutaImagen = null;
+            // En el controlador
+            if ($request->hasFile('foto')) {
+                $imagen = $request->file('foto');
+                $nombreImagen = time() . '_' . $request->usuario_admin_id . '.' . $imagen->getClientOriginalExtension();
+                // Guarda directamente en el disco público
+                $rutaImagen = $imagen->storeAs('clubs', $nombreImagen, 'public');
+            }
+
+            // Crear el club con todos los campos
             $club = Club::create([
-                'referencia' => $request->referencia,
+                'usuario_admin_id' => $request->usuario_admin_id,
+                'foto' => $rutaImagen,
                 'nombre' => $request->nombre,
-                'ciudad' => $request->ciudad,
+                'descripcion' => $request->descripcion,
                 'direccion' => $request->direccion,
+                'barrio' => $request->barrio,
+                'nombreUbicacion' => $request->nombreUbicacion,
                 'correo' => $request->correo,
-                'user_id' => $userId, // Asignar el usuario autenticado
                 'telefono' => $request->telefono,
                 'fecha_fundacion' => $request->fecha_fundacion,
-                'usuario_admin_id' => $request->usuario_admin_id,
-                // 'foto' => $request->file('foto')->store('imagenes_clubes', 'public'), // Guardar la imagen
+                'sede_id' => $request->sede_id,
+                'ciudad' => $request->ciudad,
+                'database_connection' => $request->database_connection,
+                'referencia' => $request->referencia,
+                // 'latitude' => $request->latitude,
+                // 'longitude' => $request->longitude,
             ]);
 
             if ($club) {
@@ -76,13 +93,17 @@ class ClubController extends Controller
 
             // Confirmar la transacción
             DB::commit();
-            return response()->json(['club' => $club, 'rol' => $userRole, 'status' => 'success'], 200);
+            return response()->json([
+                'club' => $club,
+                'rol' => $role,
+                'permisos' => $permissions,
+                'status' => 'success'
+            ], 200);
         } catch (\Exception $th) {
             DB::rollBack();
-
-            LogHelper::LogRegister('error_store', 'Club', 0, $th->getMessage() . ' - line: ' . $th->getLine());
+            // LogHelper::LogRegister('error_store', 'Club', 0, $th->getMessage() . ' - line: ' . $th->getLine());
             // Retornar un mensaje de error
-            return response()->json(['error' => 'Ocurrió un error al crear el club.'], 500);
+            return response()->json(['error' => 'Ocurrió un error al crear el club.', "message" => $th->getMessage()], 500);
         }
     }
 
