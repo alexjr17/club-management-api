@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('ciudad')->nullable();
             $table->enum('tipo_documento', ['CC', 'TI', 'CE']);
             $table->string('numero_documento')->unique();
+            $table->date('fecha_nacimiento')->nullable();
             $table->boolean('tutorial')->default(false);
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();

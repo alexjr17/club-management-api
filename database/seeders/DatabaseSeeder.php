@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             'nombre_usuario' => 'Alexjr17',
             'telefono' => 3016913855,
             'ciudad' => 'Sincelejo',
+            'ciudad' => 'Colombia',
             'tipo_documento' => 'CC',
             'numero_documento' => 1005604925, // 10 dígitos aleatorios
             'tutorial' => true, // 20% probabilidad de haber completado el tutorial

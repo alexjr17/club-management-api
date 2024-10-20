@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('mensaje');
             $table->boolean('leida')->default(false);
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('usuario_id')->references('id')->on('usuarios');
         });

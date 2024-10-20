@@ -19,6 +19,7 @@ return new class extends Migration
             $table->dateTime('fecha_inicio');
             $table->dateTime('fecha_fin');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('club_id')->references('id')->on('clubes');
         });

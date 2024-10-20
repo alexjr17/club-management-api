@@ -15,6 +15,9 @@ return new class extends Migration
             $table->unsignedBigInteger('rol_id');
             $table->unsignedBigInteger('permiso_id');
 
+            $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
+
             $table->primary(['rol_id', 'permiso_id']);
             $table->foreign('rol_id')->references('id')->on('roles');
             $table->foreign('permiso_id')->references('id')->on('permisos');

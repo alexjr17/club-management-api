@@ -18,6 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('rol_personalizado_id')->nullable();
             $table->unsignedBigInteger('club_id');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('usuario_id')->references('id')->on('usuarios');
             $table->foreign('rol_id')->references('id')->on('roles');

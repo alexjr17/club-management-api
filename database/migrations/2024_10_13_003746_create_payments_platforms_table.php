@@ -19,6 +19,7 @@ return new class extends Migration
             $table->enum('estado', ['pendiente', 'completado', 'fallido']);
             $table->string('referencia_pago')->nullable();
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('suscripcion_id')->references('id')->on('suscripciones');
         });

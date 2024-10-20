@@ -17,6 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('alumno_id');
             $table->enum('estado', ['presente', 'ausente', 'justificado']);
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('clase_id')->references('id')->on('clases');
             $table->foreign('alumno_id')->references('id')->on('roles_usuarios');

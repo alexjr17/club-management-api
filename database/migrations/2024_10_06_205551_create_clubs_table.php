@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('foto')->nullable();
             $table->string('nombre');
             $table->string('direccion');
-            $table->string('descripcion');
+            $table->text('descripcion');
             $table->string('barrio')->nullable();
             $table->string('nombre_ubicacion')->nullable();
             $table->string('correo');

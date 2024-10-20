@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('tipo_limite');
             $table->integer('valor_limite');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('plan_id')->references('id')->on('planes');
         });

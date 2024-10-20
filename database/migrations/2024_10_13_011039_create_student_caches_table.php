@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('rol_usuario_id');
             $table->unsignedBigInteger('padre_rol_usuario_id')->nullable();
-            $table->timestamp('last_updated');
+            $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('rol_usuario_id')->references('id')->on('roles_usuarios');
             $table->foreign('padre_rol_usuario_id')->references('id')->on('roles_usuarios');

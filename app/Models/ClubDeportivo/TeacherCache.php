@@ -5,6 +5,7 @@ namespace App\Models\ClubDeportivo;
 use App\Models\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class TeacherCache extends Model
 {
@@ -17,14 +18,14 @@ class TeacherCache extends Model
         'calificacion' => 'float',
         'numero_calificaciones' => 'integer',
         'last_updated' => 'datetime',
+        'especializaciones' => 'json', // Cast para array o JSON
     ];
 
     public static $rules = [
-        'rol_usuario_id' => 'required|exists:rol_usuario,id',
+        'especializaciones' => 'nullable|json', // Reglas para array o JSON
         'calificacion' => 'nullable|numeric|min:0|max:5',
         'numero_calificaciones' => 'nullable|integer|min:0',
-        'filosofia' => 'nullable|string',
-        'especializaciones' => 'nullable|string',
+        'filosofia' => 'required|string',
     ];
 
     public function userRole()

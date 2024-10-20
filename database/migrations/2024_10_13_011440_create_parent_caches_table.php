@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('padre_cache', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('rol_usuario_id');
-            $table->timestamp('last_updated');
+            $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('rol_usuario_id')->references('id')->on('roles_usuarios');
         });

@@ -18,7 +18,7 @@ class Club extends Model
     protected $table = 'clubes';
 
     protected $fillable = [
-        'foto', 'nombre', 'direccion', 'barrio', 'nombre_ubicacion',
+        'foto', 'nombre', 'direccion', 'descripcion', 'barrio', 'nombre_ubicacion',
         'correo', 'telefono', 'fecha_fundacion', 'sede_id', 'usuario_admin_id',
         'ciudad', 'referencia'
     ];
@@ -30,7 +30,7 @@ class Club extends Model
     ];
 
     public static $rules = [
-        // 'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         'nombre' => 'required|string|max:255',
         'direccion' => 'required|string|max:255',
         'barrio' => 'nullable|string|max:255',
@@ -43,6 +43,13 @@ class Club extends Model
         'ciudad' => 'required|string|max:255',
         'referencia' => 'nullable|string|max:255',
     ];
+
+    public static function updateRules($id)
+    {
+        $rules = self::$rules;
+        $rules['correo'] = 'sometimes|required|email|max:255|unique:clubes,correo,' . $id;
+        return $rules;
+    }
 
     protected $appends = ['foto_url'];
 

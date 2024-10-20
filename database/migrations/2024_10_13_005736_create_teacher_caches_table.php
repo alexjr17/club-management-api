@@ -17,9 +17,9 @@ return new class extends Migration
             $table->float('calificacion')->default(0);
             $table->integer('numero_calificaciones')->default(0);
             $table->text('filosofia')->nullable();
-            $table->text('especializaciones')->nullable();
-            $table->timestamp('last_updated');
-
+            $table->json('especializaciones')->nullable();
+            $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
             $table->foreign('rol_usuario_id')->references('id')->on('roles_usuarios');
         });
 

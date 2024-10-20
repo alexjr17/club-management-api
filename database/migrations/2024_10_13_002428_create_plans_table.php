@@ -18,6 +18,7 @@ return new class extends Migration
             $table->float('precio');
             $table->integer('duracion_dias');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
         });
     }
 

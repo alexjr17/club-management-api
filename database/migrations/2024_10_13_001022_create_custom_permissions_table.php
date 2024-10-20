@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('acciones');
             $table->unsignedBigInteger('club_id');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('club_id')->references('id')->on('clubes');
         });

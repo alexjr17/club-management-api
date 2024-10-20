@@ -22,6 +22,7 @@ return new class extends Migration
             $table->time('hora_inicio');
             $table->time('hora_fin');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('club_id')->references('id')->on('clubes');
             $table->foreign('profesor_id')->references('id')->on('roles_usuarios');

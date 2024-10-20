@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
@@ -25,7 +26,7 @@ class User extends Authenticatable implements JWTSubject
     protected $fillable = [
         'foto', 'nombre', 'apellido', 'email', 'pais', 'ciudad',  'password', 'estado',
         'nombre_usuario', 'telefono', 'ciudad', 'tipo_documento',
-        'numero_documento', 'tutorial'
+        'numero_documento', 'tutorial', 'fecha_nacimiento'
     ];
 
     protected $hidden = ['password'];
@@ -60,13 +61,14 @@ class User extends Authenticatable implements JWTSubject
         'nombre' => 'required|string|max:255',
         'apellido' => 'required|string|max:255',
         'email' => 'required|email|max:255|unique:usuarios,email',
-        'password' => 'required|string|min:8|confirmed',
+        // 'password' => 'required|string|min:8|confirmed',
         'estado' => 'nullable|string',
         // 'nombre_usuario' => 'required|string|max:255|unique:usuarios,nombre_usuario',
         'telefono' => 'nullable|string|max:20',
         'pais' => 'nullable|string|max:255',
         'ciudad' => 'nullable|string|max:255',
         'tipo_documento' => 'required|string|max:30',
+        'fecha_nacimiento' => 'required|string|max:30',
         'numero_documento' => 'required|string|max:50|unique:usuarios,numero_documento',
         'tutorial' => 'boolean',
     ];
@@ -79,6 +81,16 @@ class User extends Authenticatable implements JWTSubject
         $rules['numero_documento'] = 'sometimes|required|string|max:50|unique:usuarios,numero_documento,' . $id;
         $rules['contrasena'] = 'sometimes|required|string|min:8';
         return $rules;
+    }
+
+    protected $appends = ['foto_url'];
+
+    public function getFotoUrlAttribute()
+    {
+        if ($this->foto) {
+            return asset(Storage::url($this->foto));
+        }
+        return null;
     }
 
     public function club()

@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('rol_personalizado_permiso', function (Blueprint $table) {
             $table->unsignedBigInteger('rol_personalizado_id');
             $table->unsignedBigInteger('permiso_personalizado_id');
+            $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->primary(['rol_personalizado_id', 'permiso_personalizado_id']);
             $table->foreign('rol_personalizado_id')->references('id')->on('roles_personalizados');

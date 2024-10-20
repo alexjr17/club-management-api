@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClubDeportivo\ClubController;
+use App\Http\Controllers\ClubDeportivo\TeacherCacheController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -28,12 +29,15 @@ Route::post('password/reset', [AuthController::class, 'reset']);
 // Route::group(['middleware' => 'auth:api'], function () {
 //     Route::group(['middleware' => 'user.connection'], function () {
         Route::post('clubs', [ClubController::class, 'store']);
-        Route::put('clubs/{id}', [ClubController::class, 'update']);
+        // Route::put('clubs/{id}', [ClubController::class, 'update']);
+        Route::post('update-club', [ClubController::class, 'update']);
         Route::get('clubs/{id}', [ClubController::class, 'show']);
-//     });
+        Route::post('clubs/{id}/update-image', [ClubController::class, 'updateImage']);
+        Route::post('teachers', [TeacherCacheController::class, 'store']);
+        //     });
 // });
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+Route::get('/user', function (Request $request) {
     return $request->user();
 });
 

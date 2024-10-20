@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('modulo');
             $table->string('acciones');
             $table->boolean('es_default')->default(false);
+            $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
         });
     }
 

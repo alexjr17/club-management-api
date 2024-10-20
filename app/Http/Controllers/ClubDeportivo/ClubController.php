@@ -7,8 +7,11 @@ use App\Http\Controllers\Controller;
 use App\Models\ClubDeportivo\Club;
 use App\Models\Role;
 use App\Models\UserRole;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ClubController extends Controller
@@ -35,29 +38,16 @@ class ClubController extends Controller
     // Crear un nuevo club
     public function store(Request $request)
     {
-
-        // Validar los datos entrantes
         $validator = Validator::make($request->all(), Club::$rules);
         if ($validator->fails()) return response()->json(['message' => $validator->errors()->first(), 'code' => 400], 400);
 
-        // Iniciar una transacción
         DB::beginTransaction();
 
         try {
-            // Obtener el ID del usuario autenticado
-            $userId = 1;
+            $userId = 1; // Asumiendo que obtienes el ID del usuario autenticado
 
-            // Manejar la subida de la imagen
-            $rutaImagen = null;
-            // En el controlador
-            if ($request->hasFile('foto')) {
-                $imagen = $request->file('foto');
-                $nombreImagen = time() . '_' . $request->usuario_admin_id . '.' . $imagen->getClientOriginalExtension();
-                // Guarda directamente en el disco público
-                $rutaImagen = $imagen->storeAs('clubs', $nombreImagen, 'public');
-            }
+            $rutaImagen = $this->procesarImagen($request->file('foto'));
 
-            // Crear el club con todos los campos
             $club = Club::create([
                 'usuario_admin_id' => $request->usuario_admin_id,
                 'foto' => $rutaImagen,
@@ -83,15 +73,12 @@ class ClubController extends Controller
                     'rol_id' => 1,
                     'club_id' => $club->id
                 ]);
-                // Carga la relación 'role' en la instancia recién creada
-                $userRole->load('role.permissions'); // Carga las relaciones anidadas
+                $userRole->load('role.permissions');
 
-                // Ahora puedes acceder a la relación role y sus permisos
-                $role = $userRole->role; // Obtiene la relación role
-                $permissions = $role->permissions; // Obtiene los permisos del rol
+                $role = $userRole->role;
+                $permissions = $role->permissions;
             }
 
-            // Confirmar la transacción
             DB::commit();
             return response()->json([
                 'club' => $club,
@@ -101,11 +88,10 @@ class ClubController extends Controller
             ], 200);
         } catch (\Exception $th) {
             DB::rollBack();
-            // LogHelper::LogRegister('error_store', 'Club', 0, $th->getMessage() . ' - line: ' . $th->getLine());
-            // Retornar un mensaje de error
             return response()->json(['error' => 'Ocurrió un error al crear el club.', "message" => $th->getMessage()], 500);
         }
     }
+
 
     /**
      * Display the specified resource.
@@ -135,41 +121,97 @@ class ClubController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
-        // Validar los datos entrantes
-        $validator = Validator::make($request->all(), array_merge(Club::updateRules($id), Club::$rulesImagen), [
-            'correo.unique' => 'El correo ya está en uso por otro club.'
-        ]);
+        $validator = Validator::make($request->all(), Club::updateRules($request->club_id));
 
-        if ($validator->fails())  return response()->json(['message' => $validator->errors()->first()], 400);
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()->first(), 'code' => 400], 400);
+        }
 
-        DB::beginTransaction(); // Iniciar la transacción
+        DB::beginTransaction();
 
         try {
-            $club = Club::findOrFail($id); // Obtener el club por ID
+            $club = Club::findOrFail($request->club_id);
 
-            // Actualizar los datos del club
+            // Procesar la imagen usando el método existente
+            $rutaImagen = $this->procesarImagen(
+                $request->hasFile('foto') ? $request->file('foto') : null,
+                $club->foto
+            );
+
+            // Actualizar los campos del club
             $club->update([
+                'foto' => $rutaImagen,
                 'nombre' => $request->nombre,
-                'ciudad' => $request->ciudad,
+                'descripcion' => $request->descripcion,
                 'direccion' => $request->direccion,
+                'barrio' => $request->barrio,
+                'nombreUbicacion' => $request->nombreUbicacion,
                 'correo' => $request->correo,
-                // Solo actualizar la foto si se envió una nueva
-                'foto' => $request->file('foto') ? $request->file('foto')->store('imagenes_clubes', 'public') : $club->foto,
+                'telefono' => $request->telefono,
+                'ciudad' => $request->ciudad,
+                'database_connection' => $request->database_connection,
+                'referencia' => $request->referencia
             ]);
 
-            DB::commit(); // Confirmar la transacción
+            DB::commit();
 
-            return response()->json($club, 200);
-        } catch (\Throwable $th) {
-            DB::rollBack(); // Revertir la transacción en caso de error
-            LogHelper::LogRegister('error', 'update_club', $id, $th->getMessage() . ' - line: ' . $th->getLine());
-            return response()->json(['error' => 'Ocurrió un error al actualizar el club.'], 500);
+            return response()->json([
+                'message' => 'Club actualizado exitosamente',
+                'club' => $club,
+                'status' => 'success'
+            ], 200);
+        }catch (ModelNotFoundException $e) {
+            return response()->json(["message" => "Club no encontrado", "code" => 404]);
+        } catch (\Exception $th) {
+            DB::rollBack();
+            Log::error('Error al actualizar club: ' . $th->getMessage());
+            return response()->json([
+                'error' => 'Ocurrió un error al actualizar el club.',
+                'message' => $th->getMessage()
+            ], 500);
         }
     }
 
+    private function processFormData($content)
+    {
+        $data = [];
+        $parts = explode("\r\n", $content);
+        $key = null;
 
+        foreach ($parts as $part) {
+            if (strpos($part, 'name=') !== false) {
+                preg_match('/name="([^"]+)"/', $part, $matches);
+                $key = $matches[1];
+            } elseif ($part !== '' && $key !== null && !strpos($part, '--')) {
+                $data[$key] = trim($part);
+                $key = null;
+            }
+        }
+
+        // Procesar la fecha de fundación
+        if (isset($data['fecha_fundacion'])) {
+            $data['fecha_fundacion'] = date('Y-m-d', strtotime($data['fecha_fundacion']));
+        }
+
+        return $data;
+    }
+
+    private function procesarImagen($nuevaImagen, $imagenAnterior = null)
+    {
+        if ($nuevaImagen) {
+            // Eliminar la imagen anterior si existe
+            if ($imagenAnterior) {
+                Storage::disk('public')->delete($imagenAnterior);
+            }
+
+            $nombreImagen = time() . '_' . $nuevaImagen->getClientOriginalName();
+            return $nuevaImagen->storeAs('clubs', $nombreImagen, 'public');
+        }
+
+        return $imagenAnterior;
+    }
 
 
     /**

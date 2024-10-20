@@ -20,6 +20,7 @@ return new class extends Migration
             $table->enum('estado', ['pendiente', 'completado', 'fallido']);
             $table->string('referencia_pago')->nullable();
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('membresia_id')->references('id')->on('membresias');
             $table->foreign('rol_usuario_id')->references('id')->on('roles_usuarios');
