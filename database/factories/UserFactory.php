@@ -24,18 +24,21 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'foto' => $this->faker->imageUrl(200, 200, 'people'),
-            'nombre' => $this->faker->firstName,
-            'apellido' => $this->faker->lastName,
-            'email' => $this->faker->unique()->safeEmail,
-            'password' => bcrypt('password'), // Considera usar Hash::make() en lugar de bcrypt() en versiones más recientes de Laravel
-            'estado' => $this->faker->boolean(80) ? 1 : 0, // 80% probabilidad de estar activo
-            'nombre_usuario' => $this->faker->unique()->userName,
-            'telefono' => $this->faker->phoneNumber,
-            'ciudad' => $this->faker->city,
+            'foto' => $this->faker->imageUrl(),
+            'nombre' => $this->faker->firstName(),
+            'apellido' => $this->faker->lastName(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'password' => bcrypt('password'),
+            'estado' => 1,
+            'nombre_usuario' => $this->faker->unique()->userName(),
+            'telefono' => $this->faker->phoneNumber(),
+            'pais' => 'Colombia',
+            'ciudad' => 'Sincelejo',
             'tipo_documento' => $this->faker->randomElement(['CC', 'TI', 'CE']),
-            'numero_documento' => $this->faker->unique()->numerify('##########'), // 10 dígitos aleatorios
-            'tutorial' => $this->faker->boolean(20), // 20% probabilidad de haber completado el tutorial
+            'numero_documento' => $this->faker->unique()->numerify('##########'),
+            'fecha_nacimiento' => $this->faker->date(),
+            'tutorial' => false,
+            'email_verified_at' => now(),
         ];
     }
 

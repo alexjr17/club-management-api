@@ -19,17 +19,65 @@ class TeacherCacheController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        //
-    }
+    public function index() {}
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function showByClub(Request $request, int $clubId)
     {
-        //
+        $limit = $request->input("limit") ?? 12;
+        $sortType = $request->has('ascending') ? ($request->input('ascending') == 1 ? 'asc' : 'desc') : 'asc';
+        $search = $request->input("query");
+        $especialidad = $request->input("especialidad");
+        $calificacionMinima = $request->input("calificacion_minima");
+
+        $query = UserRole::with(['user', 'teacherCache'])
+            ->whereHas('role', function ($query) {
+                $query->where('nombre', 'profesor');
+            })
+            ->where('club_id', $clubId);
+
+        if (!empty($search)) {
+            $query->whereHas('user', function ($queryBuilder) use ($search) {
+                $queryBuilder->where('nombre', 'like', "%{$search}%")
+                    ->orWhere('apellido', 'like', "%{$search}%")
+                    ->orWhere('cedula', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por especialidad
+        // if (!empty($especialidad)) {
+        //     $query->whereHas('teacherCache', function ($q) use ($especialidad) {
+        //         $q->whereJsonContains('especializaciones', $especialidad);
+        //     });
+        // }
+
+        // Filtro por calificación mínima
+        if (!is_null($calificacionMinima)) {
+            $query->whereHas('teacherCache', function ($q) use ($calificacionMinima) {
+                $q->where('calificacion', '>=', $calificacionMinima);
+            });
+        }
+
+        // Ordenamiento
+        if ($request->has("orderBy")) {
+            $orderBy = $request->orderBy;
+            if (in_array($orderBy, ['nombre', 'apellido', 'cedula'])) {
+                $query->orderBy(User::select($orderBy)
+                    ->whereColumn('usuarios.id', 'roles_usuarios.usuario_id')
+                    ->limit(1), $sortType);
+            } elseif ($orderBy === 'calificacion') {
+                $query->orderBy(TeacherCache::select('calificacion')
+                    ->whereColumn('profesor_cache.rol_usuario_id', 'roles_usuarios.id')
+                    ->limit(1), $sortType);
+            } else {
+                $query->orderBy($orderBy, $sortType);
+            }
+        } else {
+            $query->orderBy('created_at', $sortType);
+        }
+
+        $profesores = $query->paginate($limit);
+
+        return $profesores;
     }
 
     /**

@@ -14,7 +14,12 @@ class UserRole extends Model
     use HasFactory;
     protected $table = 'roles_usuarios';
 
-    protected $fillable = ['usuario_id', 'rol_id', 'rol_personalizado_id', 'club_id'];
+    protected $fillable = [
+        'usuario_id',
+        'rol_id',
+        'rol_personalizado_id',
+        'club_id'
+    ];
 
     public static $rules = [
         'usuario_id' => 'required|exists:usuarios,id',
@@ -45,7 +50,7 @@ class UserRole extends Model
 
     public function teacherCache()
     {
-        return $this->hasOne(TeacherCache::class);
+        return $this->hasOne(TeacherCache::class, 'rol_usuario_id');
     }
 
     public function studentCache()

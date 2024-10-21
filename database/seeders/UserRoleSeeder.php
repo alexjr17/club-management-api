@@ -2,17 +2,18 @@
 
 namespace Database\Seeders;
 
-use App\Models\ClubDeportivo\Club;
+use App\Models\UserRole;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-class ClubSeeder extends Seeder
+class UserRoleSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        Club::factory()->count(1)->create();
+        UserRole::factory()->count(1)->create();
+        // RolUsuario::factory()->count(10)->conRolPersonalizado()->create();
     }
 }

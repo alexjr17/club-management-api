@@ -47,6 +47,7 @@ class User extends Authenticatable implements JWTSubject
         'telefono' => 'required|string|max:20',
         'pais' => 'required|string|max:255',
         'ciudad' => 'required|string|max:255',
+        'fecha_nacimiento' => 'required|string|max:30',
         'tipo_documento' => 'required|string|max:30',
         'numero_documento' => 'required|string|max:50|unique:usuarios,numero_documento',
     ];

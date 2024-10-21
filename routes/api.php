@@ -33,7 +33,9 @@ Route::post('password/reset', [AuthController::class, 'reset']);
         Route::post('update-club', [ClubController::class, 'update']);
         Route::get('clubs/{id}', [ClubController::class, 'show']);
         Route::post('clubs/{id}/update-image', [ClubController::class, 'updateImage']);
+
         Route::post('teachers', [TeacherCacheController::class, 'store']);
+        Route::get('teachersByClub/{club_id}', [TeacherCacheController::class, 'showByCLub']);
         //     });
 // });
 

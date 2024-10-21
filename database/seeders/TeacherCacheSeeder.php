@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ClubDeportivo\TeacherCache;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -12,6 +13,6 @@ class TeacherCacheSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        TeacherCache::factory()->count(50)->create();
     }
 }

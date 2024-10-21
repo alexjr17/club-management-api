@@ -17,11 +17,13 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->tinyInteger('estado')->default(1);
-            $table->string('nombre_usuario')->unique();
+            $table->string('nombre_usuario')->default();
             $table->string('telefono')->nullable();
+            $table->string('pais')->nullable();
             $table->string('ciudad')->nullable();
             $table->enum('tipo_documento', ['CC', 'TI', 'CE']);
             $table->string('numero_documento')->unique();
+            $table->date('fecha_nacimiento')->nullable();
             $table->boolean('tutorial')->default(false);
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
@@ -32,6 +34,7 @@ return new class extends Migration
             $table->string('foto')->nullable();
             $table->string('nombre');
             $table->string('direccion');
+            $table->text('descripcion');
             $table->string('barrio')->nullable();
             $table->string('nombre_ubicacion')->nullable();
             $table->string('correo');
@@ -40,9 +43,10 @@ return new class extends Migration
             $table->unsignedBigInteger('sede_id')->nullable();
             $table->unsignedBigInteger('usuario_admin_id');
             $table->string('ciudad');
-            $table->string('database_connection');
+            $table->string('database_connection')->nullable();
             $table->string('referencia')->nullable();
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('usuario_admin_id')->references('id')->on('usuarios');
         });
@@ -67,6 +71,8 @@ return new class extends Migration
             $table->string('nombre');
             $table->string('descripcion')->nullable();
             $table->boolean('es_default')->default(false);
+            $table->string('icon')->nullable();
+            $table->string('color')->nullable();
             $table->timestamps();
 
         });
@@ -76,6 +82,7 @@ return new class extends Migration
             $table->string('descripcion')->nullable();
             $table->unsignedBigInteger('club_id');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('club_id')->references('id')->on('clubes');
         });
@@ -86,6 +93,7 @@ return new class extends Migration
             $table->unsignedBigInteger('rol_personalizado_id')->nullable();
             $table->unsignedBigInteger('club_id');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('usuario_id')->references('id')->on('usuarios');
             $table->foreign('rol_id')->references('id')->on('roles');
@@ -100,6 +108,8 @@ return new class extends Migration
             $table->string('modulo');
             $table->string('acciones');
             $table->boolean('es_default')->default(false);
+            $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
         });
         Schema::create('permisos_personalizados', function (Blueprint $table) {
             $table->id();
@@ -110,12 +120,16 @@ return new class extends Migration
             $table->string('acciones');
             $table->unsignedBigInteger('club_id');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('club_id')->references('id')->on('clubes');
         });
         Schema::create('rol_permiso', function (Blueprint $table) {
             $table->unsignedBigInteger('rol_id');
             $table->unsignedBigInteger('permiso_id');
+
+            $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->primary(['rol_id', 'permiso_id']);
             $table->foreign('rol_id')->references('id')->on('roles');
@@ -124,6 +138,8 @@ return new class extends Migration
         Schema::create('rol_personalizado_permiso', function (Blueprint $table) {
             $table->unsignedBigInteger('rol_personalizado_id');
             $table->unsignedBigInteger('permiso_personalizado_id');
+            $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->primary(['rol_personalizado_id', 'permiso_personalizado_id']);
             $table->foreign('rol_personalizado_id')->references('id')->on('roles_personalizados');
@@ -136,6 +152,7 @@ return new class extends Migration
             $table->float('precio');
             $table->integer('duracion_dias');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
         });
         Schema::create('limites_planes', function (Blueprint $table) {
             $table->id();
@@ -143,6 +160,7 @@ return new class extends Migration
             $table->string('tipo_limite');
             $table->integer('valor_limite');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('plan_id')->references('id')->on('planes');
         });
@@ -154,6 +172,7 @@ return new class extends Migration
             $table->date('fecha_inicio');
             $table->date('fecha_fin');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('club_id')->references('id')->on('clubes');
             $table->foreign('plan_id')->references('id')->on('planes');
@@ -166,6 +185,7 @@ return new class extends Migration
             $table->enum('estado', ['pendiente', 'completado', 'fallido']);
             $table->string('referencia_pago')->nullable();
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('suscripcion_id')->references('id')->on('suscripciones');
         });
@@ -178,6 +198,7 @@ return new class extends Migration
             $table->float('precio');
             $table->string('marca')->nullable();
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('club_id')->references('id')->on('clubes');
         });
@@ -189,6 +210,7 @@ return new class extends Migration
             $table->dateTime('fecha_inicio');
             $table->dateTime('fecha_fin');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('club_id')->references('id')->on('clubes');
         });
@@ -200,6 +222,7 @@ return new class extends Migration
             $table->float('precio');
             $table->integer('duracion_dias');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('club_id')->references('id')->on('clubes');
         });
@@ -212,6 +235,7 @@ return new class extends Migration
             $table->enum('estado', ['pendiente', 'completado', 'fallido']);
             $table->string('referencia_pago')->nullable();
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('membresia_id')->references('id')->on('membresias');
             $table->foreign('rol_usuario_id')->references('id')->on('roles_usuarios');
@@ -222,6 +246,7 @@ return new class extends Migration
             $table->string('descripcion')->nullable();
             $table->string('referencia')->unique();
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
         });
         Schema::create('categorias', function (Blueprint $table) {
             $table->id();
@@ -231,6 +256,7 @@ return new class extends Migration
             $table->string('descripcion')->nullable();
             $table->string('referencia')->unique();
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('club_id')->references('id')->on('clubes');
             $table->foreign('deporte_id')->references('id')->on('deportes');
@@ -246,6 +272,7 @@ return new class extends Migration
             $table->time('hora_inicio');
             $table->time('hora_fin');
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('club_id')->references('id')->on('clubes');
             $table->foreign('profesor_id')->references('id')->on('roles_usuarios');
@@ -257,6 +284,7 @@ return new class extends Migration
             $table->unsignedBigInteger('alumno_id');
             $table->enum('estado', ['presente', 'ausente', 'justificado']);
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('clase_id')->references('id')->on('clases');
             $table->foreign('alumno_id')->references('id')->on('roles_usuarios');
@@ -267,6 +295,7 @@ return new class extends Migration
             $table->string('mensaje');
             $table->boolean('leida')->default(false);
             $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('usuario_id')->references('id')->on('usuarios');
         });
@@ -276,16 +305,17 @@ return new class extends Migration
             $table->float('calificacion')->default(0);
             $table->integer('numero_calificaciones')->default(0);
             $table->text('filosofia')->nullable();
-            $table->text('especializaciones')->nullable();
-            $table->timestamp('last_updated');
-
+            $table->json('especializaciones')->nullable();
+            $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
             $table->foreign('rol_usuario_id')->references('id')->on('roles_usuarios');
         });
         Schema::create('alumno_cache', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('rol_usuario_id');
             $table->unsignedBigInteger('padre_rol_usuario_id')->nullable();
-            $table->timestamp('last_updated');
+            $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('rol_usuario_id')->references('id')->on('roles_usuarios');
             $table->foreign('padre_rol_usuario_id')->references('id')->on('roles_usuarios');
@@ -293,7 +323,8 @@ return new class extends Migration
         Schema::create('padre_cache', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('rol_usuario_id');
-            $table->timestamp('last_updated');
+            $table->timestamps();
+            $table->softDeletes(); // Agrega el campo deleted_at para eliminaciones suaves
 
             $table->foreign('rol_usuario_id')->references('id')->on('roles_usuarios');
         });

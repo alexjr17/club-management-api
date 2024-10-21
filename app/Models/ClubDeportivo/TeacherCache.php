@@ -12,13 +12,18 @@ class TeacherCache extends Model
     use HasFactory;
     protected $table = 'profesor_cache';
 
-    protected $fillable = ['rol_usuario_id', 'calificacion', 'numero_calificaciones', 'filosofia', 'especializaciones'];
+    protected $fillable = [
+        'rol_usuario_id',
+        'calificacion',
+        'numero_calificaciones',
+        'filosofia',
+        'especializaciones'
+    ];
 
     protected $casts = [
+        'especializaciones' => 'json',
         'calificacion' => 'float',
         'numero_calificaciones' => 'integer',
-        'last_updated' => 'datetime',
-        'especializaciones' => 'json', // Cast para array o JSON
     ];
 
     public static $rules = [
