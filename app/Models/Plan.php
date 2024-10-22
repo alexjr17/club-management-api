@@ -6,10 +6,12 @@ use App\Models\ClubDeportivo\PlanLimit;
 use App\Models\ClubDeportivo\Subscription;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Plan extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     protected $table = 'planes';
 
     protected $fillable = ['nombre', 'descripcion', 'precio', 'duracion_dias'];

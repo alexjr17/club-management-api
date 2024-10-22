@@ -5,10 +5,12 @@ namespace App\Models\ClubDeportivo;
 use App\Models\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ClubPayment extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     protected $table = 'pagos_club';
 
     protected $fillable = ['membresia_id', 'rol_usuario_id', 'monto', 'fecha_pago', 'estado', 'referencia_pago'];

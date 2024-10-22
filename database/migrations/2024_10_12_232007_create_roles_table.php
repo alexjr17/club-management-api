@@ -18,6 +18,7 @@ return new class extends Migration
             $table->boolean('es_default')->default(false);
             $table->string('icon')->nullable();
             $table->string('color')->nullable();
+            $table->softDeletes();
             $table->timestamps();
 
         });

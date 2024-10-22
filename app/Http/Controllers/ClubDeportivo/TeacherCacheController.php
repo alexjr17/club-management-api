@@ -6,11 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\ClubDeportivo\TeacherCache;
 use App\Models\User;
 use App\Models\UserRole;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Psy\Output\Theme;
 
 use function PHPSTORM_META\type;
 
@@ -23,7 +27,7 @@ class TeacherCacheController extends Controller
 
     public function showByClub(Request $request, int $clubId)
     {
-        $limit = $request->input("limit") ?? 12;
+        $limit = $request->input("per_page") ?? 12;
         $sortType = $request->has('ascending') ? ($request->input('ascending') == 1 ? 'asc' : 'desc') : 'asc';
         $search = $request->input("query");
         $especialidad = $request->input("especialidad");
@@ -39,7 +43,7 @@ class TeacherCacheController extends Controller
             $query->whereHas('user', function ($queryBuilder) use ($search) {
                 $queryBuilder->where('nombre', 'like', "%{$search}%")
                     ->orWhere('apellido', 'like', "%{$search}%")
-                    ->orWhere('cedula', 'like', "%{$search}%");
+                    ->orWhere('numero_documento', 'like', "%{$search}%");
             });
         }
 
@@ -146,17 +150,143 @@ class TeacherCacheController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    /**
+     * Update teacher and related user information
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function update(Request $request): JsonResponse
     {
-        //
+
+        // return response()->json($request->all());
+        try {
+            // Validate required parameters first
+            $validated = $request->validate([
+                'club_id' => 'required|integer',
+                'id' => 'required|integer'
+            ]);
+
+            // Find the role user with eager loaded relationships
+            $roleUser = UserRole::with(['user', 'teacherCache'])
+                ->where('club_id', $validated['club_id'])
+                ->where('id', $validated['id'])
+                ->firstOrFail();
+
+            // Validate all input data at once
+            $request->validate(
+                array_merge(
+                    TeacherCache::$rules,
+                    User::updateRules($roleUser->usuario_id)
+                )
+            );
+
+            return DB::transaction(function () use ($request, $roleUser) {
+                // Datos para el usuario
+                $userData = $request->except([
+                    'especializaciones',
+                    'filosofia',
+                    'club_id',
+                    'id'
+                ]);
+
+                if ($request->file('foto')) {
+                    $rutaImagen = $this->procesarImagen($request->file('foto'));
+                    $userData['foto'] = $rutaImagen;
+                }
+
+                // Actualizar datos del usuario
+                $roleUser->user->update($userData);
+
+                // Datos para teacherCache
+                $teacherData = $request->only([
+                    'especializaciones',
+                    'filosofia',
+                ]);
+
+                // Actualizar datos de teacherCache
+                $roleUser->teacherCache->update($teacherData);
+
+                // Recargar las relaciones para obtener los datos actualizados
+                $roleUser->load(['user', 'teacherCache']);
+
+                return response()->json([
+                    'message' => 'Profedor actualizado correctamente',
+                    'data' => [
+                        'teacher' => $roleUser->teacherCache,
+                    ]
+                ], 200);
+            });
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Club o usuario no encontrado',
+                'code' => 404
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('Teacher update failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'message' => 'Error al actualizar los datos',
+                'error' => $e->getMessage(),
+                'code' => 500
+            ], 500);
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request)
     {
-        //
+        try {
+            // Validar los parámetros recibidos
+            $request->validate([
+                'club_id' => 'required|integer',
+                'id' => 'required|integer',
+                'usuario_id' => 'required|integer',
+            ]);
+
+
+            // Usar transacción para manejar la eliminación de datos
+            return DB::transaction(function () use ($request) {
+
+                // Encontrar el registro con las relaciones cargadas (user y teacherCache)
+                $roleUser = UserRole::with(['user', 'teacherCache'])
+                    ->where('club_id', $request->club_id)
+                    ->where('id', $request->id)
+                    ->where('usuario_id', $request->usuario_id)
+                    ->firstOrFail();
+
+                // return response()->json($roleUser);
+                // Eliminar el registro relacionado (teacherCache y user)
+                if ($roleUser->teacherCache) {
+                    $roleUser->teacherCache->delete();
+                }
+
+                if ($roleUser->user) {
+                    $roleUser->user->delete();
+                }
+
+                // Eliminar el roleUser después de borrar las relaciones
+                $roleUser->delete();
+
+                // Commit implícito de la transacción si todo va bien
+                return response()->json(['message' => 'Registro eliminado correctamente', 'code' => 200], 200);
+            });
+        } catch (ModelNotFoundException $e) {
+            return response()->json(["message" => "Registro no encontrado", "code" => 404]);
+        } catch (\Exception $th) {
+            // Capturar cualquier otro error
+            return response()->json([
+                'message' => "No se pudo procesar la solicitud, intente de nuevo",
+                'error' => $th->getMessage(),
+                'code' => 500
+            ], 500);
+        }
     }
 
     private function procesarImagen($nuevaImagen, $imagenAnterior = null)

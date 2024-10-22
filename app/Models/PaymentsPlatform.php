@@ -4,10 +4,12 @@ namespace App\Models\ClubDeportivo;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PaymentPlatform extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     protected $table = 'pagos_plataforma';
 
     protected $fillable = ['suscripcion_id', 'monto', 'fecha_pago', 'estado', 'referencia_pago'];

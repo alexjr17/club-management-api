@@ -5,10 +5,12 @@ namespace App\Models\ClubDeportivo;
 use App\Models\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ParentCache extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     protected $table = 'padre_cache';
 
     protected $fillable = ['rol_usuario_id'];

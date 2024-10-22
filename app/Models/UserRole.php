@@ -8,10 +8,12 @@ use App\Models\ClubDeportivo\StudentCache;
 use App\Models\ClubDeportivo\TeacherCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class UserRole extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     protected $table = 'roles_usuarios';
 
     protected $fillable = [

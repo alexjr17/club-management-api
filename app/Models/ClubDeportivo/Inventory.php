@@ -4,10 +4,12 @@ namespace App\Models\ClubDeportivo;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Inventory extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     protected $table = 'inventarios';
 
     protected $fillable = ['club_id', 'nombre', 'descripcion', 'cantidad', 'precio', 'marca'];

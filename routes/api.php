@@ -36,6 +36,8 @@ Route::post('password/reset', [AuthController::class, 'reset']);
 
         Route::post('teachers', [TeacherCacheController::class, 'store']);
         Route::get('teachersByClub/{club_id}', [TeacherCacheController::class, 'showByCLub']);
+        Route::post('update-teachers', [TeacherCacheController::class, 'update']);
+        Route::post('delete-teachers', [TeacherCacheController::class, 'destroy']);
         //     });
 // });
 

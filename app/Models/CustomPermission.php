@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Models\ClubDeportivo\Club;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CustomPermission extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     protected $table = 'permisos_personalizados';
 
     protected $fillable = ['nombre', 'descripcion', 'referencia', 'modulo', 'acciones', 'club_id'];

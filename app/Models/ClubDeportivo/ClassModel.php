@@ -5,10 +5,12 @@ namespace App\Models\ClubDeportivo;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ClassModel extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     protected $table = 'clases';
 
     protected $fillable = ['club_id', 'profesor_id', 'deporte_id', 'nombre', 'descripcion', 'fecha', 'hora_inicio', 'hora_fin'];

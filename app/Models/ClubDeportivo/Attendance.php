@@ -5,10 +5,12 @@ namespace App\Models\ClubDeportivo;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Attendance extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     protected $table = 'asistencias';
 
     protected $fillable = ['clase_id', 'alumno_id', 'estado'];
