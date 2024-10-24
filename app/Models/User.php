@@ -87,10 +87,11 @@ class User extends Authenticatable implements JWTSubject
 
     public function getFotoUrlAttribute()
     {
-        if ($this->foto) {
+        $valida_caracter = strpos($this->foto, '_photo') !== false;
+        if ($this->foto && $valida_caracter) {
             return asset(Storage::url($this->foto));
         }
-        return null;
+        return $this->foto;
     }
 
     public function club()

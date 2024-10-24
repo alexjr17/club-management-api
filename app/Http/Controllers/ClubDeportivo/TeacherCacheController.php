@@ -30,6 +30,8 @@ class TeacherCacheController extends Controller
         $limit = $request->input("per_page") ?? 12;
         $sortType = $request->has('ascending') ? ($request->input('ascending') == 1 ? 'asc' : 'desc') : 'asc';
         $search = $request->input("query");
+        $is_active = $request->input("is_active");
+        $date = $request->input("date");
         $especialidad = $request->input("especialidad");
         $calificacionMinima = $request->input("calificacion_minima");
 
@@ -44,6 +46,18 @@ class TeacherCacheController extends Controller
                 $queryBuilder->where('nombre', 'like', "%{$search}%")
                     ->orWhere('apellido', 'like', "%{$search}%")
                     ->orWhere('numero_documento', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($is_active) && ($is_active == 'true' || $is_active == 'false')) {
+            $query->whereHas('user', function ($queryBuilder) use ($is_active) {
+                $queryBuilder->where('estado', $is_active == 'true' ? 1 : 0);
+            });
+        }
+
+        if (!empty($date)) {
+            $query->whereHas('user', function ($queryBuilder) use ($date) {
+                $queryBuilder->where('created_at', '>=' ,$date);
             });
         }
 

@@ -13,6 +13,6 @@ class TeacherCacheSeeder extends Seeder
      */
     public function run(): void
     {
-        TeacherCache::factory()->count(50)->create();
+        TeacherCache::factory()->count(150)->create();
     }
 }
