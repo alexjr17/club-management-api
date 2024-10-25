@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClubDeportivo\ClubController;
 use App\Http\Controllers\ClubDeportivo\TeacherCacheController;
+use App\Http\Controllers\ConfigController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -28,20 +29,23 @@ Route::post('password/reset', [AuthController::class, 'reset']);
 
 // Route::group(['middleware' => 'auth:api'], function () {
 //     Route::group(['middleware' => 'user.connection'], function () {
-        Route::post('clubs', [ClubController::class, 'store']);
-        // Route::put('clubs/{id}', [ClubController::class, 'update']);
-        Route::post('update-club', [ClubController::class, 'update']);
-        Route::get('clubs/{id}', [ClubController::class, 'show']);
-        Route::post('clubs/{id}/update-image', [ClubController::class, 'updateImage']);
+Route::post('clubs', [ClubController::class, 'store']);
+// Route::put('clubs/{id}', [ClubController::class, 'update']);
+Route::post('update-club', [ClubController::class, 'update']);
+Route::get('clubs/{id}', [ClubController::class, 'show']);
+Route::post('clubs/{id}/update-image', [ClubController::class, 'updateImage']);
 
-        Route::post('teachers', [TeacherCacheController::class, 'store']);
-        Route::get('teachersByClub/{club_id}', [TeacherCacheController::class, 'showByCLub']);
-        Route::post('update-teachers', [TeacherCacheController::class, 'update']);
-        Route::post('delete-teachers', [TeacherCacheController::class, 'destroy']);
-        //     });
+Route::post('teachers', [TeacherCacheController::class, 'store']);
+Route::get('teachersByClub/{club_id}', [TeacherCacheController::class, 'showByCLub']);
+Route::post('update-teachers', [TeacherCacheController::class, 'update']);
+Route::post('delete-teachers', [TeacherCacheController::class, 'destroy']);
+
+Route::apiResource('configuraciones', ConfigController::class);
+Route::get('user/config', [ConfigController::class, 'getUserConfig']);
+Route::get('club/{club}/config', [ConfigController::class, 'getClubConfig']);
+//     });
 // });
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 });
-
