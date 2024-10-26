@@ -12,31 +12,32 @@ class ConfigSeeder extends Seeder
 {
     public function run()
     {
-        // Crear configuraciones para clubes existentes
-        Club::all()->each(function ($club) {
+        // Crear configuraciones para usuarios existentes
+        User::all()->each(function ($user) {
+            // Configuración del sistema
+            Config::create([
+                'usuario_id' => $user->id,
+                'modulo' => 'sistema',
+                'configuracion' => [
+                    'modo_tema' => [
+                        'value' => 'light',
+                        'status' => true
+                    ]
+                ],
+                'activo' => true
+            ]);
+
             // Configuración de pagos
             Config::create([
-                'club_id' => $club->id,
-                'tipo' => 'admin',
+                'usuario_id' => $user->id,
                 'modulo' => 'pagos',
-                'configuracion' => Config::getDefaultConfig('admin', 'pagos'),
+                'configuracion' => [
+                    'notificar_vencimiento_menbresia' => [
+                        'value' => 7,
+                        'status' => true
+                    ]
+                ],
                 'activo' => true
-            ]);
-
-            // Configuración de clases
-            Config::create([
-                'club_id' => $club->id,
-                'tipo' => 'admin',
-                'modulo' => 'clases',
-                'configuracion' => Config::getDefaultConfig('admin', 'clases'),
-                'activo' => true
-            ]);
-        });
-
-        // Crear algunas configuraciones de usuario aleatorias
-        User::all()->take(5)->each(function ($usuario) {
-            Config::factory()->usuario()->create([
-                'usuario_id' => $usuario->id
             ]);
         });
     }

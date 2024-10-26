@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Validation\Rule;
 
 class Config extends Model
 {
@@ -15,95 +16,78 @@ class Config extends Model
 
     protected $fillable = [
         'usuario_id',
-        'club_id',
-        'tipo',
         'modulo',
-        'configuracion',
+        'tipo',
+        'club_id',
+        'configuraciones',
         'activo'
     ];
 
     protected $casts = [
-        'configuracion' => 'array',
+        'configuraciones' => 'array',
         'activo' => 'boolean'
     ];
 
-    // Reglas de validación
+    protected $hidden = [
+        'updated_at',
+        'created_at'
+    ];
+
     public static $rules = [
-        'usuario_id' => 'nullable|exists:usuarios,id',
-        'club_id' => 'nullable|exists:clubs,id',
-        'tipo' => 'required|in:admin,usuario',
-        'modulo' => 'required|in:sistema,pagos,clases,notificaciones',
-        'configuracion' => 'required|json',
-        'activo' => 'boolean'
+        'configuraciones' => 'required|array',
+        'configuraciones.*.data' => 'required|array',
+        'configuraciones.*.data.*.value' => 'required',
+        'configuraciones.*.data.*.status' => 'required|boolean',
+        'configuraciones.*.modulo' => 'required|string|max:255|in:sistema,pagos,notificaciones',
+        'configuraciones.*.tipo' => 'required|in:admin,usuario',
+        'club' => 'required_if:configuraciones.*.tipo,admin|exists:clubes,id|nullable',
+        'usuario_id' => 'required|exists:usuarios,id'
     ];
 
-    // Validaciones personalizadas
-    public static function customValidationRules($tipo, $modulo)
-    {
-        $rules = [];
+    public static $message = [
+        'configuraciones.required' => 'Las configuraciones son requeridas',
+        'configuraciones.*.data.required' => 'Los datos de configuración son requeridos',
+        'configuraciones.*.modulo.required' => 'El módulo es requerido',
+        'configuraciones.*.modulo.in' => 'El módulo debe ser: sistema, pagos o notificaciones',
+        'configuraciones.*.modulo.max' => 'El módulo no puede exceder los 255 caracteres',
+        'configuraciones.*.tipo.required' => 'El tipo es requerido para cada configuración',
+        'configuraciones.*.tipo.in' => 'El tipo debe ser admin o usuario',
+        'club.required_if' => 'El club es requerido cuando alguna configuración es de tipo admin',
+        'club.exists' => 'El club seleccionado no existe',
+        'usuario_id.required' => 'El ID de usuario es requerido',
+        'usuario_id.exists' => 'El usuario seleccionado no existe'
+    ];
 
-        if ($tipo === 'admin') {
-            switch ($modulo) {
-                case 'pagos':
-                    $rules['configuracion.notificaciones.dias_previos_vencimiento'] = 'required|integer|min:1|max:30';
-                    $rules['configuracion.notificaciones.dias_notificacion_vencido'] = 'required|integer|min:1|max:30';
-                    $rules['configuracion.notificaciones.max_recordatorios'] = 'required|integer|min:1|max:10';
-                    break;
-                case 'clases':
-                    $rules['configuracion.asistencia.tolerancia_minutos'] = 'required|integer|min:0|max:60';
-                    $rules['configuracion.reservas.dias_anticipacion'] = 'required|integer|min:1|max:30';
-                    break;
-            }
-        }
+    // Módulos disponibles
+    public const MODULOS = [
+        'sistema',
+        'pagos',
+        'notificaciones'
+    ];
 
-        return $rules;
-    }
-
-    // Configuraciones por defecto
-    public static function getDefaultConfig($tipo, $modulo)
-    {
-        $defaults = [
-            'usuario' => [
-                'sistema' => [
-                    'interfaz' => [
-                        'modo_oscuro' => false,
-                        'tamano_fuente' => 'normal',
-                        'idioma' => 'es',
-                        'mostrar_tutorial' => true
-                    ],
-                    'notificaciones' => [
-                        'email' => true,
-                        'push' => false
-                    ]
-                ]
-            ],
-            'admin' => [
-                'pagos' => [
-                    'notificaciones' => [
-                        'dias_previos_vencimiento' => 3,
-                        'dias_notificacion_vencido' => 1,
-                        'max_recordatorios' => 3
-                    ],
-                    'politicas' => [
-                        'permitir_pagos_parciales' => true,
-                        'dias_gracia' => 5,
-                        'porcentaje_mora' => 5
-                    ]
-                ]
-            ]
-        ];
-
-        return $defaults[$tipo][$modulo] ?? [];
-    }
-
-    // Relaciones
+    // Relación con el usuario
     public function usuario(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'usuario_id');
     }
 
-    public function club(): BelongsTo
+    // Scope para filtrar por módulo
+    public function scopeModulo($query, string $modulo)
     {
-        return $this->belongsTo(Club::class);
+        return $query->where('modulo', $modulo);
+    }
+
+    // Scope para configuraciones activas
+    public function scopeActivas($query)
+    {
+        return $query->where('activo', true);
+    }
+
+    // Método para actualizar configuración
+    public function actualizarConfiguracion(array $nuevaConfig): void
+    {
+        $configuracionActual = $this->configuracion;
+        $this->configuracion = array_merge($configuracionActual, $nuevaConfig);
+        $this->save();
     }
 }

@@ -3,6 +3,7 @@
 namespace Database\Factories\ClubDeportivo;
 
 use App\Models\ClubDeportivo\Config;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -12,38 +13,26 @@ class ConfigFactory extends Factory
 {
     protected $model = Config::class;
 
-    public function definition()
+    public function definition(): array
     {
-        $tipo = $this->faker->randomElement(['admin', 'usuario']);
-        $modulo = $this->faker->randomElement(['sistema', 'pagos', 'clases', 'notificaciones']);
-
         return [
-            'tipo' => $tipo,
-            'modulo' => $modulo,
-            'configuracion' => Config::getDefaultConfig($tipo, $modulo),
+            'usuario_id' => User::factory(),
+            'modulo' => $this->faker->randomElement(Config::MODULOS),
+            'configuracion' => [
+                'sistema' => [
+                    'modo_tema' => [
+                        'value' => $this->faker->randomElement(['light', 'dark']),
+                        'status' => true
+                    ]
+                ],
+                'pagos' => [
+                    'notificar_vencimiento_menbresia' => [
+                        'value' => $this->faker->numberBetween(1, 30),
+                        'status' => true
+                    ]
+                ]
+            ],
             'activo' => true
         ];
-    }
-
-    public function usuario()
-    {
-        return $this->state(function (array $attributes) {
-            return [
-                'tipo' => 'usuario',
-                'modulo' => 'sistema',
-                'configuracion' => Config::getDefaultConfig('usuario', 'sistema')
-            ];
-        });
-    }
-
-    public function admin()
-    {
-        return $this->state(function (array $attributes) {
-            return [
-                'tipo' => 'admin',
-                'modulo' => 'pagos',
-                'configuracion' => Config::getDefaultConfig('admin', 'pagos')
-            ];
-        });
     }
 }

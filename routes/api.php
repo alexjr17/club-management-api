@@ -40,7 +40,7 @@ Route::get('teachersByClub/{club_id}', [TeacherCacheController::class, 'showByCL
 Route::post('update-teachers', [TeacherCacheController::class, 'update']);
 Route::post('delete-teachers', [TeacherCacheController::class, 'destroy']);
 
-Route::apiResource('configuraciones', ConfigController::class);
+Route::apiResource('configuraciones', ConfigController::class)->only(['index','update']);
 Route::get('user/config', [ConfigController::class, 'getUserConfig']);
 Route::get('club/{club}/config', [ConfigController::class, 'getClubConfig']);
 //     });
