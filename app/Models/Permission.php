@@ -18,6 +18,8 @@ class Permission extends Model
         'es_default' => 'boolean',
     ];
 
+    protected $hidden = ['created_at', 'updated_at', 'pivot', 'es_default', 'deleted_at'];
+
     public static $rules = [
         'nombre' => 'required|string|max:255',
         'descripcion' => 'nullable|string',

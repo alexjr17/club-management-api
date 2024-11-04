@@ -65,5 +65,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'user.connection' => \App\Http\Middleware\UserDatabase::class,
         'set.database' => \App\Http\Middleware\SetDatabaseConnection::class,
+        'check.permiso' => \App\Http\Middleware\CheckPermission::class,
     ];
 }

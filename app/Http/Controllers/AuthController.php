@@ -36,6 +36,7 @@ class AuthController extends Controller
             'username.unique' => 'El usuario ya está en uso.',
         ];
 
+
         $rules = ($request->has('step') && $request->step == 1) ? User::$rulesStep1 : User::$rules; //definir las validades para el step1 y step2
 
         $request->validate($rules); //validar campos
@@ -54,7 +55,11 @@ class AuthController extends Controller
                 'rol_id' => $request->rol_id,
                 'nombre' => $request->nombre,
                 'apellido' => $request->apellido,
+                'pais' => $request->pais,
+                'ciudad' => $request->ciudad,
+                'telefono' => $request->telefono,
                 "tipo_documento" => $request->tipo_documento,
+                "fecha_nacimiento" => $request->fecha_nacimiento,
                 "numero_documento" => $request->numero_documento,
                 'usuario' => $request->usuario,
                 'email' => $request->email,
@@ -116,6 +121,7 @@ class AuthController extends Controller
                 'club.memberships.clubPayments'
             ]);
 
+
             /*$userData = User::with([ //codigo importante no borrar
                 'roles.permissions',
                 'clubs',
@@ -171,6 +177,8 @@ class AuthController extends Controller
             $rol = $roles->first() ?? null;
             $rol_permiso = $rol ? $rol->permissions->unique() : null;
             // $roles_permisos = $roles ? $roles->flatMap->permissions->unique() : null; //codigo importatnte no borrar
+
+            // return response()->json($rol_permiso);
 
             $integrantes_club = $club ? $this->integrantes($club->id, $rol->id) : null;
             if ($integrantes_club) {

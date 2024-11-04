@@ -27,24 +27,27 @@ Route::post('password/email', [AuthController::class, 'sendResetLinkEmail']);
 // Ruta para restablecer la contraseña
 Route::post('password/reset', [AuthController::class, 'reset']);
 
-// Route::group(['middleware' => 'auth:api'], function () {
-//     Route::group(['middleware' => 'user.connection'], function () {
-Route::post('clubs', [ClubController::class, 'store']);
-// Route::put('clubs/{id}', [ClubController::class, 'update']);
-Route::post('update-club', [ClubController::class, 'update']);
-Route::get('clubs/{id}', [ClubController::class, 'show']);
-Route::post('clubs/{id}/update-image', [ClubController::class, 'updateImage']);
+Route::group(['middleware' => 'auth:api'], function () {
+    // Route::group(['middleware' => 'user.connection'], function () {
 
-Route::post('teachers', [TeacherCacheController::class, 'store']);
-Route::get('teachersByClub/{club_id}', [TeacherCacheController::class, 'showByCLub']);
-Route::post('update-teachers', [TeacherCacheController::class, 'update']);
-Route::post('delete-teachers', [TeacherCacheController::class, 'destroy']);
+        //club
+        Route::post('clubs', [ClubController::class, 'store'])->middleware('check.permiso:crear_club');
+        Route::post('update-club', [ClubController::class, 'update'])->middleware('check.permiso:editar_club');
+        Route::get('clubs/{id}', [ClubController::class, 'show'])->middleware('check.permiso:ver_club');
+        // Route::post('clubs/{id}/update-image', [ClubController::class, 'updateImage'])->middleware('check.permiso:ver_club');
 
-Route::apiResource('configuraciones', ConfigController::class)->only(['index','update']);
-Route::get('user/config', [ConfigController::class, 'getUserConfig']);
-Route::get('club/{club}/config', [ConfigController::class, 'getClubConfig']);
-//     });
-// });
+        //propfesores
+        Route::post('teachers', [TeacherCacheController::class, 'store'])->middleware('check.permiso:crear_entrenador');
+        Route::get('teachersByClub/{club_id}', [TeacherCacheController::class, 'showByCLub'])->middleware('check.permiso:ver_entrenador');
+        Route::post('update-teachers', [TeacherCacheController::class, 'update'])->middleware('check.permiso:editar_entrenador');
+        Route::post('delete-teachers', [TeacherCacheController::class, 'destroy'])->middleware('check.permiso:eliminar_entrenador');
+
+        //configuraciones
+        Route::apiResource('configuraciones', ConfigController::class)->only(['index', 'update'])->middleware('check.permiso:ver_club');
+        Route::get('user/config', [ConfigController::class, 'getUserConfig'])->middleware('check.permiso:ver_club');
+        Route::get('club/{club}/config', [ConfigController::class, 'getClubConfig'])->middleware('check.permiso:ver_club');
+    // });
+});
 
 Route::get('/user', function (Request $request) {
     return $request->user();

@@ -94,6 +94,20 @@ class User extends Authenticatable implements JWTSubject
         return $this->foto;
     }
 
+    // Relación entre los roles del usuario y los permisos
+    public function hasPermission($permiso)
+    {
+        // $permisos = $this->roles->load('permissions')->first();
+        // return response()->json($permisos->permissions);
+        foreach ($this->roles as $role) {
+            if ($role->permissions->contains('nombre', $permiso)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function club()
     {
         return $this->hasMany(Club::class, 'usuario_admin_id');
