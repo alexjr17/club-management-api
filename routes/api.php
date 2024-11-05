@@ -44,8 +44,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
         //configuraciones
         Route::apiResource('configuraciones', ConfigController::class)->only(['index', 'update'])->middleware('check.permiso:editar_configuracion');
-        Route::get('user/config', [ConfigController::class, 'getUserConfig'])->middleware('check.permiso:ver_club');
-        Route::get('club/{club}/config', [ConfigController::class, 'getClubConfig'])->middleware('check.permiso:ver_club');
+        Route::get('user/config', [ConfigController::class, 'getUserConfig'])->middleware('check.permiso:ver_configuracion');
+        Route::get('club/{club}/config', [ConfigController::class, 'getClubConfig'])->middleware('check.permiso:ver_configuracion');
     // });
 });
 
