@@ -43,7 +43,7 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::post('delete-teachers', [TeacherCacheController::class, 'destroy'])->middleware('check.permiso:eliminar_entrenador');
 
         //configuraciones
-        Route::apiResource('configuraciones', ConfigController::class)->only(['index', 'update'])->middleware('check.permiso:ver_club');
+        Route::apiResource('configuraciones', ConfigController::class)->only(['index', 'update'])->middleware('check.permiso:editar_configuracion');
         Route::get('user/config', [ConfigController::class, 'getUserConfig'])->middleware('check.permiso:ver_club');
         Route::get('club/{club}/config', [ConfigController::class, 'getClubConfig'])->middleware('check.permiso:ver_club');
     // });

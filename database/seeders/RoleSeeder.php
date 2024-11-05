@@ -59,6 +59,7 @@ class RoleSeeder extends Seeder
 
             // configuraciones
             ['nombre' => 'ver_configuracion', 'descripcion' => 'Permite ver el configuracion', 'referencia' => 'configuracion.view', 'modulo' => 'configuracion', 'acciones' => 'ver'],
+            ['nombre' => 'editar_configuracion', 'descripcion' => 'Permite editar la configuracion', 'referencia' => 'configuracion.edit', 'modulo' => 'configuracion', 'acciones' => 'editar'],
 
             // Permisos para padres
             ['nombre' => 'ver_padres', 'descripcion' => 'Permite ver la información de los padres', 'referencia' => 'padres.view', 'modulo' => 'padres', 'acciones' => 'ver'],
@@ -71,7 +72,7 @@ class RoleSeeder extends Seeder
 
         // Asignación de permisos a roles
         $rolesPermisos = [
-            'admin' => ['ver_dashboard', 'crear_club', 'editar_club', 'eliminar_club', 'ver_club', 'crear_entrenador', 'editar_entrenador', 'eliminar_entrenador', 'ver_entrenador', 'crear_alumno', 'editar_alumno', 'eliminar_alumno', 'ver_alumno', 'crear_inventario', 'editar_inventario', 'eliminar_inventario', 'ver_inventario', 'ver_padres'],
+            'admin' => ['ver_dashboard', 'crear_club', 'editar_club', 'eliminar_club', 'ver_club', 'crear_entrenador', 'editar_entrenador', 'eliminar_entrenador', 'ver_entrenador', 'crear_alumno', 'editar_alumno', 'eliminar_alumno', 'ver_alumno', 'crear_inventario', 'editar_inventario', 'eliminar_inventario', 'ver_inventario', 'ver_padres', 'ver_configuracion', 'editar_configuracion'],
             'profesor' => ['ver_dashboard', 'ver_club', 'ver_entrenador', 'ver_alumno', 'crear_alumno', 'editar_alumno', 'ver_inventario', 'ver_padres'],
             'alumno' => ['ver_dashboard', 'ver_club', 'ver_entrenador', 'ver_alumno'],
             'padre' => ['ver_dashboard', 'ver_club', 'ver_entrenador', 'ver_alumno', 'ver_padres'],
