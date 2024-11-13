@@ -19,7 +19,7 @@ class RequestApi extends Controller
         $this->apiUrl = "https://graph.facebook.com/v21.0/"; // Base URL para la API de WhatsApp Business
         $this->accessToken = 'your_whatsapp_business_api_access_token'; // Reemplaza con tu token de acceso
         $this->secretKey = "5b094bfd92b0f96fb8f37fe17caf4893";
-        $this->redirectUrl = "https://club-management-api-production.up.railway.app/api/conectar";
+        $this->redirectUrl = "https://club-management-api-production.up.railway.app/auth/callback";
         $this->appId = "1241134183884602";
     }
 
