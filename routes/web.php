@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('auth/callback', [RequestApi::class, 'autentication']);
+Route::get('auth/callback', [RequestApi::class, 'conectar']);
 
 Route::get('/', function () {
     return view('welcome');
