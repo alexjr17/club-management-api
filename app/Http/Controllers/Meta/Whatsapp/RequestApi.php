@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Meta\Whatsapp;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Intervention\Image\Colors\Rgb\Channels\Red;
 
 class RequestApi extends Controller
 {
 	private $redirectUrl;
-    private $development = false;
     private $apiUrl;
     private $accessToken;
     private $appId;
@@ -19,8 +19,12 @@ class RequestApi extends Controller
         $this->apiUrl = "https://graph.facebook.com/v21.0/"; // Base URL para la API de WhatsApp Business
         $this->accessToken = 'your_whatsapp_business_api_access_token'; // Reemplaza con tu token de acceso
         $this->secretKey = "5b094bfd92b0f96fb8f37fe17caf4893";
-        $this->redirectUrl = "https://club-management-api-production.up.railway.app";
+        $this->redirectUrl = "https://club-management-api-production.up.railway.app/api/conectar";
         $this->appId = "1241134183884602";
+    }
+
+    public function conectar(Request $request) {
+        return response()->json($request->all());
     }
 
     public function autentication() {
