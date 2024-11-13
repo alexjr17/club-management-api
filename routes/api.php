@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClubDeportivo\ClubController;
 use App\Http\Controllers\ClubDeportivo\TeacherCacheController;
 use App\Http\Controllers\ConfigController;
+use App\Http\Controllers\Meta\Whatsapp\RequestApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,7 @@ Route::post('register', [AuthController::class, 'register']);
 
 // Ruta para enviar el enlace de recuperación de contraseña
 Route::post('password/email', [AuthController::class, 'sendResetLinkEmail']);
+Route::get('conection/whatsapp', [RequestApi::class, 'autentication']);
 
 // Ruta para restablecer la contraseña
 Route::post('password/reset', [AuthController::class, 'reset']);
