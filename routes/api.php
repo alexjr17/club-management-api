@@ -24,8 +24,10 @@ Route::post('register', [AuthController::class, 'register']);
 
 // Ruta para enviar el enlace de recuperación de contraseña
 Route::post('password/email', [AuthController::class, 'sendResetLinkEmail']);
-Route::get('conection/whatsapp', [RequestApi::class, 'autentication']);
-Route::get('conectar', [RequestApi::class, 'conectar']);
+
+Route::get('connection/whatsapp', [RequestApi::class, 'connect']);
+Route::get('auth/callback', [RequestApi::class, 'callback']);
+Route::post('whatsapp/send', [RequestApi::class, 'sendMessage']);
 
 // Ruta para restablecer la contraseña
 Route::post('password/reset', [AuthController::class, 'reset']);

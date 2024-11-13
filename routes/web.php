@@ -14,7 +14,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('auth/callback', [RequestApi::class, 'conectar']);
+Route::get('connection/whatsapp', [RequestApi::class, 'connect']);
+Route::get('auth/callback', [RequestApi::class, 'callback']);
+Route::post('whatsapp/send', [RequestApi::class, 'sendMessage']);
 
 Route::get('/', function () {
     return view('welcome');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Meta\Whatsapp;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Intervention\Image\Colors\Rgb\Channels\Red;
 
 class RequestApi extends Controller
@@ -16,168 +17,81 @@ class RequestApi extends Controller
 
     public function __construct()
     {
-        $this->apiUrl = "https://graph.facebook.com/v21.0/"; // Base URL para la API de WhatsApp Business
-        $this->accessToken = 'your_whatsapp_business_api_access_token'; // Reemplaza con tu token de acceso
-        $this->secretKey = "5b094bfd92b0f96fb8f37fe17caf4893";
-        $this->redirectUrl = "https://club-management-api-production.up.railway.app/auth/callback";
-        $this->appId = "1241134183884602";
+        $this->apiUrl = "https://graph.facebook.com/v19.0/"; // Versión más estable actual
+        $this->secretKey = env('META_APP_SECRET');
+        $this->redirectUrl = env('APP_URL') . "/auth/callback";
+        $this->appId = env('META_APP_ID');
     }
 
-    public function conectar(Request $request) {
-        return response()->json($request->all());
-    }
-
-    public function autentication() {
+    public function connect()
+    {
         $params = [
             "client_id" => $this->appId,
             "redirect_uri" => $this->redirectUrl,
-            "scope" => "whatsapp_business_messaging",
-            "state" => "what1797tt",
-            "client_secret" => $this->secretKey
+            "scope" => "whatsapp_business_management whatsapp_business_messaging", // Scopes necesarios
+            "state" => csrf_token(), // Usar CSRF token para seguridad
+            "response_type" => "code" // Necesario para OAuth
         ];
 
-        $url = "https://www.facebook.com/v21.0/dialog/oauth?" . http_build_query($params);
-
+        $url = "https://www.facebook.com/v19.0/dialog/oauth?" . http_build_query($params);
         return redirect()->away($url);
     }
 
-    /**
-     * sendMessage
-     * Enviar un mensaje usando la API de WhatsApp
-     */
-    public function sendMessage($phoneNumber, $message)
+    public function callback(Request $request)
     {
-        $url = $this->apiUrl . 'your_phone_number_id/messages'; // Reemplaza con tu "phone_number_id"
-
-        $data = [
-            'messaging_product' => 'whatsapp',
-            'to' => $phoneNumber,
-            'type' => 'text',
-            'text' => [
-                'body' => $message,
-            ]
-        ];
-
-        return $this->post($url, $data);
-    }
-
-    /**
-     * post
-     * Método para realizar una solicitud POST con cURL
-     */
-    public function post($url, $data)
-    {
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => json_encode($data),
-            CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . $this->accessToken,
-                'Content-Type: application/json'
-            ],
-        ]);
-
-        $response = curl_exec($curl);
-        curl_close($curl);
-
-        return json_decode($response, true);
-    }
-
-    /**
-     * get
-     * Método para realizar una solicitud GET con cURL
-     */
-    public function get($url)
-    {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . $this->accessToken,
-            ],
-        ]);
-
-        $response = curl_exec($curl);
-        curl_close($curl);
-
-        return json_decode($response, true);
-    }
-
-    /**
-     * delete
-     * Método para realizar una solicitud DELETE con cURL
-     */
-    public function delete($url)
-    {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'DELETE',
-            CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . $this->accessToken,
-            ],
-        ]);
-
-        $response = curl_exec($curl);
-        curl_close($curl);
-
-        return json_decode($response, true);
-    }
-
-    /**
-     * requestCurl
-     * Método genérico para realizar cualquier tipo de solicitud con cURL
-     */
-    public function requestCurl($method, $url, $data = null)
-    {
-        $curl = curl_init();
-
-        $options = [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => $method,
-            CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . $this->accessToken,
-                'Content-Type: application/json'
-            ],
-        ];
-
-        if ($data) {
-            $options[CURLOPT_POSTFIELDS] = json_encode($data);
+        if ($request->has('error')) {
+            return response()->json([
+                'error' => $request->error,
+                'error_description' => $request->error_description
+            ], 400);
         }
 
-        curl_setopt_array($curl, $options);
+        try {
+            // Intercambiar el código por un token de acceso
+            $response = Http::post('https://graph.facebook.com/v19.0/oauth/access_token', [
+                'client_id' => $this->appId,
+                'client_secret' => $this->secretKey,
+                'redirect_uri' => $this->redirectUrl,
+                'code' => $request->code
+            ]);
 
-        $response = curl_exec($curl);
-        curl_close($curl);
+            $accessToken = $response->json()['access_token'];
 
-        return json_decode($response, true);
+            // Guardar el token en la base de datos o en cache
+            // Cache::put('whatsapp_access_token', $accessToken, now()->addDays(60));
+
+            return response()->json([
+                'success' => true,
+                'access_token' => $accessToken
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al obtener el token de acceso',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function sendMessage($phoneNumber, $message)
+    {
+        try {
+            $response = Http::withToken($this->accessToken)
+                ->post($this->apiUrl . 'YOUR_PHONE_NUMBER_ID/messages', [
+                    'messaging_product' => 'whatsapp',
+                    'to' => $phoneNumber,
+                    'type' => 'text',
+                    'text' => [
+                        'body' => $message
+                    ]
+                ]);
+
+            return response()->json($response->json());
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al enviar mensaje',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
