@@ -29,7 +29,7 @@ class RequestApi extends Controller
             "scope"=> "whatsapp_business_messaging",
             "state" => "what1797tt"
         ];
-        $url = "https://www.facebook.com/v21.0/dialog/oauth" + http_build_query($params);
+        $url = "https://www.facebook.com/v21.0/dialog/oauth?". http_build_query($params);
         redirect($url);
     }
 
