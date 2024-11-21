@@ -2,12 +2,14 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-
-use App\Models\ClubDeportivo\Club;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Models\ClubDeportivo\Club;
+use App\Models\ClubDeportivo\Plan;
+use App\Models\ClubDeportivo\PaymentPlatform;
+use App\Models\ClubDeportivo\Suscription;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,40 +18,176 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // Crear roles primero
-        $this->call(RoleSeeder::class);
+        $this->command->info('Iniciando proceso de seeding...');
 
-        // Datos del usuario
-        $usuario = [
+        // 1. Seedear datos básicos
+        $this->seedBasicData();
+
+        // 2. Crear Club Principal y Admin
+        $mainClub = $this->createMainClubAndAdmin();
+
+        // 3. Crear datos de prueba para el club principal
+        $this->createTestDataForClub($mainClub);
+
+        // 4. Crear clubes adicionales
+        $this->createAdditionalClubs();
+
+        // $this->command->info('Proceso de seeding completado exitosamente.');
+    }
+
+    /**
+     * Seedear datos básicos del sistema
+     */
+    private function seedBasicData()
+    {
+        $this->command->info('Creando datos básicos del sistema...');
+        $this->call([
+            RoleSeeder::class,
+            PlanSeeder::class,
+        ]);
+    }
+
+    /**
+     * Crear el club principal y el usuario administrador
+     */
+    private function createMainClubAndAdmin()
+    {
+        $this->command->info('Creando club principal y administrador...');
+
+
+        // Crear admin
+        $adminUser = User::create([
             'nombre' => 'Alex',
             'apellido' => 'Rodriguez',
             'email' => 'alexjose.r.r@gmail.com',
-            'password' => bcrypt('12345678'), // Considera usar Hash::make() en lugar de bcrypt() en versiones más recientes de Laravel
-            'estado' => 1, // 80% probabilidad de estar activo
+            'password' => Hash::make('12345678'),
+            'estado' => 1,
             'nombre_usuario' => 'Alexjr17',
             'telefono' => 3016913855,
             'ciudad' => 'Sincelejo',
-            'pais' => 'Colombia', // Cambié 'ciudad' a 'pais' para evitar duplicados
+            'pais' => 'Colombia',
             'tipo_documento' => 'CC',
-            'numero_documento' => 1005604925, // 10 dígitos aleatorios
-            'tutorial' => true, // 20% probabilidad de haber completado el tutorial
-        ];
+            'numero_documento' => 1005604925,
+            'tutorial' => true,
+        ]);
 
-        // Crear el usuario
-        $user = User::create($usuario);
+        // Crear club principal
+        $mainClub = Club::factory()->create();
 
-        // Crear el rol del usuario
-        UserRole::factory()->create([
-            'usuario_id' => $user->id,
+        // Asignar rol admin
+        UserRole::create([
+            'usuario_id' => $adminUser->id,
             'rol_id' => 1,
             'rol_personalizado_id' => null,
-            'club_id' => Club::factory()->create()->id, // Asegúrate de crear el club y obtener su ID
+            'club_id' => $mainClub->id,
         ]);
 
-        // Llamar a otros seeders según sea necesario
-        $this->call([
-            // UserRoleSeeder::class,
-            TeacherCacheSeeder::class,
+        return $mainClub;
+    }
+
+    /**
+     * Crear clubes adicionales
+     */
+    private function createAdditionalClubs()
+    {
+        $this->command->info('Creando clubes adicionales...');
+
+        Club::factory()
+            ->count(1)
+            ->sequence(
+                ['nombre' => 'Club Deportivo Norte'],
+                ['nombre' => 'Club Deportivo Sur'],
+                ['nombre' => 'Club Deportivo Este']
+            )
+            ->create()
+            ->each(function ($club) {
+                $this->createTestDataForClub($club);
+            });
+    }
+
+    /**
+     * Crear datos de prueba para un club específico
+     */
+    private function createTestDataForClub($club)
+    {
+        $this->command->info("Creando datos de prueba para el club: {$club->nombre}");
+
+        // 1. Crear usuarios con roles
+        $this->createClubUsers($club);
+
+        // 2. Crear suscripciones y pagos
+        $this->createSubscriptionsAndPayments($club);
+    }
+
+    /**
+     * Crear usuarios para un club
+     */
+    private function createClubUsers($club)
+    {
+        // Crear usuarios con diferentes roles
+        $this->call(TeacherCacheSeeder::class);
+        return;
+        $roles = [
+            ['role' => 2, 'count' => 5], // profesores
+            ['role' => 3, 'count' => 0], // alumnos
+            ['role' => 4, 'count' => 0], // padres
+        ];
+
+        foreach ($roles as $roleData) {
+            User::factory()
+                ->count($roleData['count'])
+                ->create()
+                ->each(function ($user) use ($club, $roleData) {
+                    UserRole::create([
+                        'usuario_id' => $user->id,
+                        'club_id' => $club->id,
+                        'rol_id' => $roleData['role'],
+                    ]);
+                });
+        }
+    }
+
+    /**
+     * Crear suscripciones y pagos para un club
+     */
+    private function createSubscriptionsAndPayments($club)
+    {
+        // Crear suscripción activa
+        $activeSub = Suscription::create([
+            'club_id' => $club->id,
+            'plan_id' => Plan::inRandomOrder()->first()->id,
+            'estado' => 'activa',
+            'fecha_inicio' => now(),
+            'fecha_fin' => now()->addYear(),
         ]);
+        $activeSub->load('plan');
+        // Crear pagos para suscripción activa
+        PaymentPlatform::factory()
+        ->count(6)
+        ->sequence(fn ($sequence) => [
+            'fecha_pago' => now()->subMonths(6-$sequence->index),
+            'estado' => 'completado',
+            'monto' => $activeSub->plan->precio,
+            ])
+            ->create(['suscripcion_id' => $activeSub->id]);
+
+        // Crear suscripción vencida
+        $inactiveSub = Suscription::factory()->create([
+            'club_id' => $club->id,
+            'plan_id' => Plan::inRandomOrder()->first()->id,
+            'estado' => 'inactiva',
+            'fecha_inicio' => now()->subYear(),
+            'fecha_fin' => now()->subMonth(),
+        ]);
+
+        // Crear pagos para suscripción vencida
+        PaymentPlatform::factory()
+            ->count(3)
+            ->sequence(fn ($sequence) => [
+                'fecha_pago' => now()->subMonths(12-$sequence->index),
+                'estado' => 'completado',
+                'monto' => $inactiveSub->plan->precio,
+            ])
+            ->create(['suscripcion_id' => $inactiveSub->id]);
     }
 }

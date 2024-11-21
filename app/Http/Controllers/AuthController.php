@@ -39,9 +39,9 @@ class AuthController extends Controller
 
         $rules = ($request->has('step') && $request->step == 1) ? User::$rulesStep1 : User::$rules; //definir las validades para el step1 y step2
 
-        $request->validate($rules); //validar campos
-        // $validator = Validator::make($request->all(), $rules);
-        // if ($validator->fails()) return response()->json(['errors' => $validator->errors(), 'status' => 400]);
+        // $request->validate($rules); //validar campos
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) return response()->json(['errors' => $validator->errors(), 'status' => 400]);
 
         if ($request->has('step') && $request->step === 1) {
             return response()->json(['status' => 200, "message" => 'Validation success']);

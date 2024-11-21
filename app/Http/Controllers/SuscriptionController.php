@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ClubDeportivo\subscriptions;
+use App\Models\ClubDeportivo\Suscription;
 use Illuminate\Http\Request;
 
-class SubscriptionsController extends Controller
+class SuscriptionController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -34,7 +34,7 @@ class SubscriptionsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(subscriptions $subscriptions)
+    public function show(Suscription $suscriptions)
     {
         //
     }
@@ -42,7 +42,7 @@ class SubscriptionsController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(subscriptions $subscriptions)
+    public function edit(Suscription $suscriptions)
     {
         //
     }
@@ -50,7 +50,7 @@ class SubscriptionsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, subscriptions $subscriptions)
+    public function update(Request $request, Suscription $suscriptions)
     {
         //
     }
@@ -58,7 +58,7 @@ class SubscriptionsController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(subscriptions $subscriptions)
+    public function destroy(Suscription $suscriptions)
     {
         //
     }

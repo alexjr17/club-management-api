@@ -13,6 +13,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('usuario_id')->constrained('usuarios');
             $table->foreignId('club_id')->nullable()->constrained('clubes');
+            $table->string('nombre');
             $table->enum('tipo', ['admin', 'usuario']);
             $table->string('modulo');
             $table->json('configuraciones');

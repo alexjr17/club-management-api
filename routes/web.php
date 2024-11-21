@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('connection/whatsapp', [RequestApi::class, 'connect']);
+Route::get('webhooks', [RequestApi::class, 'webhooks']);
+
+
+
 Route::get('auth/callback', [RequestApi::class, 'callback']);
 Route::post('whatsapp/send', [RequestApi::class, 'sendMessage']);
 

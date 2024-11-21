@@ -2,12 +2,12 @@
 
 namespace App\Models\ClubDeportivo;
 
-use App\Models\Plan;
+use App\Models\ClubDeportivo\Plan;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Subscription extends Model
+class Suscription extends Model
 {
     use HasFactory;
     use SoftDeletes;
@@ -41,6 +41,6 @@ class Subscription extends Model
 
     public function platformPayments()
     {
-        return $this->hasMany(PaymentPlatform::class);
+        return $this->hasMany(PaymentPlatform::class, 'suscripcion_id');
     }
 }

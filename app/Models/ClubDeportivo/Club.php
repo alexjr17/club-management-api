@@ -103,6 +103,6 @@ class Club extends Model
 
     public function subscription()
     {
-        return $this->hasOne(Subscription::class);
+        return $this->hasOne(Suscription::class);
     }
 }

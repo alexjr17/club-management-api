@@ -113,6 +113,7 @@ class ConfigController extends Controller
         $configuraciones = collect($request->configuraciones)->map(function ($config) use ($request) {
             return Config::updateOrCreate(
                 [
+                    'nombre' => $config['nombre'],
                     'usuario_id' => $request->user()->id,
                     'modulo' => $config['modulo']
                 ],
@@ -149,6 +150,7 @@ class ConfigController extends Controller
                 $configuracionesGuardadas = [];
 
                 foreach ($request->configuraciones as $configuracion) {
+                    $nombre = $configuracion['nombre'];
                     $modulo = $configuracion['modulo'];
                     $tipo = $configuracion['tipo'];
                     $data = $configuracion['data'];
@@ -162,6 +164,7 @@ class ConfigController extends Controller
                         ->first();
 
                     $dataToSave = [
+                        'nombre' => $nombre,
                         'usuario_id' => $usuarioId,
                         'club_id' => $clubId,
                         'tipo' => $tipo,

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\ClubDeportivo;
 
 use App\Models\ClubDeportivo\PlanLimit;
-use App\Models\ClubDeportivo\Subscription;
+use App\Models\ClubDeportivo\Suscription;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -35,6 +35,6 @@ class Plan extends Model
 
     public function subscriptions()
     {
-        return $this->hasMany(Subscription::class);
+        return $this->hasMany(Suscription::class);
     }
 }

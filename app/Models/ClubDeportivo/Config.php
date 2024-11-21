@@ -15,6 +15,7 @@ class Config extends Model
     protected $table = 'configuraciones';
 
     protected $fillable = [
+        'nombre',
         'usuario_id',
         'modulo',
         'tipo',

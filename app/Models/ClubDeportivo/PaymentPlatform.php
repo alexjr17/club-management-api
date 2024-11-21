@@ -30,6 +30,6 @@ class PaymentPlatform extends Model
 
     public function subscription()
     {
-        return $this->belongsTo(Subscription::class, 'suscripcion_id');
+        return $this->belongsTo(Suscription::class, 'suscripcion_id');
     }
 }
