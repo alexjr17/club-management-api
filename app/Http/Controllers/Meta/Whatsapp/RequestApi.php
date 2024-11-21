@@ -15,14 +15,16 @@ class RequestApi extends Controller
     private $apiUrl;
     private $appId;
     private $secretKey;
-    private $accessToken = "EAAybvgbhpgABO7SY85mmPweCuQdsDgMwbrLnjvubgtZBvDQeeZB8Er65UXSiqFzAWKzvzXkj4ZCA8gbYYLI7YSJn8AUUxvRBDl1kk8ZCWiMjCBfo8Eb8sTiJmybQ909ZAn3VO9Ae3NrUJVBhC5dmFUxgtWQh4QYGZAX89ZBtw6nDsZCPKsg2CG4DsM8FcZCFjNYWoVp2SqwoYZBlO32ZCwl6qRsR1lszv4ZD";
+    private $accessToken;
 
-    public function __construct()
+    public function __construct($token)
     {
-        $this->apiUrl = "https://graph.facebook.com/v21.0/"; // Versión más estable actual
+        $this->apiUrl = "https://graph.facebook.com/v21.0/";
         $this->secretKey = env('META_APP_SECRET');
         $this->redirectUrl = env('APP_URL') . "/callback";
         $this->appId = env('META_APP_ID');
+        // $this->accessToken = $token;
+        $this->accessToken = 'EAAybvgbhpgABOzOYCpIgOoZCHEnFgZBVrBA9YsZCx2RWb1sfmrv8hAn6w3UGVsSGf12oHINVh1fxlHuK8R9gZASrSlhIHHujoXElUy03042GVoevdJecZBz6339XEscswxaNmo1ZC0BUukO0xXEhw6OpZAxIB958KYZCGXXqYNV2PMpDv13KdliJ9lbtFLKWbvGRp1SmtRNTeVWPeVniBoXzAZBuFaRMZD';
     }
 
     public function connect()
@@ -108,7 +110,7 @@ class RequestApi extends Controller
                     "modulo" => "procesos",
                     "usuario_id" => $user->id ?? 1,
                     "club_id" => $clubId,
-                    "configuraciones" =>[
+                    "configuraciones" => [
                         "access_token_whatsapp" => $accessToken
                     ]
                 ]);
@@ -118,7 +120,7 @@ class RequestApi extends Controller
                 $configuraciones["access_token_whatsapp"] = $accessToken;
 
                 $configMeta->update([
-                    "configuraciones" =>$configuraciones,
+                    "configuraciones" => $configuraciones,
                     // "usuario_id" => $user->id ?? $configMeta->usuario_id
                 ]);
             }
@@ -128,7 +130,6 @@ class RequestApi extends Controller
                 'message' => 'Token actualizado correctamente',
                 'access_token' => $accessToken
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Error en el proceso de callback',
@@ -137,21 +138,42 @@ class RequestApi extends Controller
         }
     }
 
-    public function sendMessage($phoneNumber, $message)
+    public function sendMessage($phoneAdmin, $phoneNumber, $message)
     {
         try {
+            // Formatear los números de teléfono quitando símbolos como el "+"
+            $formattedPhoneNumber = preg_replace('/[^0-9]/', '', $phoneNumber);
+            $formattedPhoneAdmin = preg_replace('/[^0-9]/', '', $phoneAdmin);
+
+            // Realizar la solicitud a la API de WhatsApp
             $response = Http::withToken($this->accessToken)
-                ->post($this->apiUrl . 'YOUR_PHONE_NUMBER_ID/messages', [
+                ->post($this->apiUrl . "$formattedPhoneAdmin/messages", [
                     'messaging_product' => 'whatsapp',
-                    'to' => $phoneNumber,
-                    'type' => 'text',
-                    'text' => [
-                        'body' => $message
+                    'to' => $formattedPhoneNumber, // Usar el número formateado correctamente
+                    "type" => "template",
+                    "template" => [
+                        "name" => "hello_world",
+                        "language" => [
+                            "code" => "en_US"
+                        ]
                     ]
                 ]);
 
-            return response()->json($response->json());
+            // Verificar si la respuesta es exitosa
+            if ($response->successful()) {
+                return response()->json([
+                    'status' => 'success',
+                    'data' => $response->json()
+                ]);
+            }
+
+            // Si hay un error en la respuesta de la API
+            return response()->json([
+                'status' => 'error',
+                'error' => $response->json()
+            ], $response->status());
         } catch (\Exception $e) {
+            // Manejar cualquier excepción que ocurra
             return response()->json([
                 'error' => 'Error al enviar mensaje',
                 'message' => $e->getMessage()

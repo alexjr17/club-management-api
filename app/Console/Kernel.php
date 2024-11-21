@@ -16,19 +16,19 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')->hourly();
         // Proceso nocturno a las 12 AM
         $schedule->command('subscriptions:check-expiring')
-            ->dailyAt('00:00')
+            ->dailyAt('22:50')
             ->withoutOverlapping()
             ->onFailure(function () {
                 Log::error('Falló la verificación de suscripciones');
             });
 
         // Proceso de envío de notificaciones a las 9 AM
-        $schedule->command('whatsapp:send-notifications')
-            ->dailyAt('09:00')
-            ->withoutOverlapping()
-            ->onFailure(function () {
-                Log::error('Falló el envío de notificaciones WhatsApp');
-            });
+        // $schedule->command('whatsapp:send-notifications')
+        //     ->dailyAt('09:00')
+        //     ->withoutOverlapping()
+        //     ->onFailure(function () {
+        //         Log::error('Falló el envío de notificaciones WhatsApp');
+        //     });
     }
 
     /**
