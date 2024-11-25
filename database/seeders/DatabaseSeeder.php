@@ -5,9 +5,12 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Models\ClubDeportivo\Club;
+use App\Models\ClubDeportivo\ParentCache;
 use App\Models\ClubDeportivo\Plan;
 use App\Models\ClubDeportivo\PaymentPlatform;
+use App\Models\ClubDeportivo\StudentCache;
 use App\Models\ClubDeportivo\Suscription;
+use App\Models\ClubDeportivo\TeacherCache;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -28,6 +31,7 @@ class DatabaseSeeder extends Seeder
 
         // 3. Crear datos de prueba para el club principal
         $this->createTestDataForClub($mainClub);
+        die;
 
         // 4. Crear clubes adicionales
         $this->createAdditionalClubs();
@@ -124,13 +128,10 @@ class DatabaseSeeder extends Seeder
      */
     private function createClubUsers($club)
     {
-        // Crear usuarios con diferentes roles
-        $this->call(TeacherCacheSeeder::class);
-        return;
         $roles = [
-            ['role' => 2, 'count' => 5], // profesores
-            ['role' => 3, 'count' => 0], // alumnos
-            ['role' => 4, 'count' => 0], // padres
+            ['role' => 2, 'count' => 60], // profesores
+            ['role' => 4, 'count' => 60],  // padres
+            ['role' => 3, 'count' => 60],  // alumnos
         ];
 
         foreach ($roles as $roleData) {
@@ -138,11 +139,35 @@ class DatabaseSeeder extends Seeder
                 ->count($roleData['count'])
                 ->create()
                 ->each(function ($user) use ($club, $roleData) {
-                    UserRole::create([
+                    // Primero crear el UserRole
+                    $userRole = UserRole::create([
                         'usuario_id' => $user->id,
                         'club_id' => $club->id,
                         'rol_id' => $roleData['role'],
                     ]);
+                    sleep(1);
+
+                    // Si es profesor, crear el TeacherCache
+                    if ($roleData['role'] == 2) {
+                        TeacherCache::factory()->create([
+                            'rol_usuario_id' => $userRole->id
+                        ]);
+                    }
+                    // Si es padres, crear el CoachCache
+                    if ($roleData['role'] == 4) {
+                        $parent = ParentCache::factory()->create([
+                            'rol_usuario_id' => $userRole->id
+                        ]);
+                        // para padres no hay campos adicionales de momento
+                    }
+
+                    if ($roleData['role'] == 3) {
+                        StudentCache::factory()->create([
+                            'rol_usuario_id' => $userRole->id,
+                            'padre_rol_usuario_id' => UserRole::where('rol_id', 4)->inRandomOrder()->first()->id
+                        ]);
+                        // para padres no hay campos adicionales de momento
+                    }
                 });
         }
     }
@@ -163,11 +188,11 @@ class DatabaseSeeder extends Seeder
         $activeSub->load('plan');
         // Crear pagos para suscripción activa
         PaymentPlatform::factory()
-        ->count(6)
-        ->sequence(fn ($sequence) => [
-            'fecha_pago' => now()->subMonths(6-$sequence->index),
-            'estado' => 'completado',
-            'monto' => $activeSub->plan->precio,
+            ->count(6)
+            ->sequence(fn($sequence) => [
+                'fecha_pago' => now()->subMonths(6 - $sequence->index),
+                'estado' => 'completado',
+                'monto' => $activeSub->plan->precio,
             ])
             ->create(['suscripcion_id' => $activeSub->id]);
 
@@ -183,8 +208,8 @@ class DatabaseSeeder extends Seeder
         // Crear pagos para suscripción vencida
         PaymentPlatform::factory()
             ->count(3)
-            ->sequence(fn ($sequence) => [
-                'fecha_pago' => now()->subMonths(12-$sequence->index),
+            ->sequence(fn($sequence) => [
+                'fecha_pago' => now()->subMonths(12 - $sequence->index),
                 'estado' => 'completado',
                 'monto' => $inactiveSub->plan->precio,
             ])

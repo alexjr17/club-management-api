@@ -2,9 +2,10 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClubDeportivo\ClubController;
+use App\Http\Controllers\ClubDeportivo\ParentCacheController;
+use App\Http\Controllers\ClubDeportivo\StudentCacheController;
 use App\Http\Controllers\ClubDeportivo\TeacherCacheController;
 use App\Http\Controllers\ConfigController;
-use App\Http\Controllers\Meta\Whatsapp\RequestApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -25,9 +26,9 @@ Route::post('register', [AuthController::class, 'register']);
 // Ruta para enviar el enlace de recuperación de contraseña
 Route::post('password/email', [AuthController::class, 'sendResetLinkEmail']);
 
-Route::get('connection/whatsapp', [RequestApi::class, 'connect']);
-Route::get('auth/callback', [RequestApi::class, 'callback']);
-Route::post('whatsapp/send', [RequestApi::class, 'sendMessage']);
+// Route::get('connection/whatsapp', [RequestApi::class, 'connect']);
+// Route::get('auth/callback', [RequestApi::class, 'callback']);
+// Route::post('whatsapp/send', [RequestApi::class, 'sendMessage']);
 
 // Ruta para restablecer la contraseña
 Route::post('password/reset', [AuthController::class, 'reset']);
@@ -46,6 +47,13 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('teachersByClub/{club_id}', [TeacherCacheController::class, 'showByCLub'])->middleware('check.permiso:ver_entrenador');
         Route::post('update-teachers', [TeacherCacheController::class, 'update'])->middleware('check.permiso:editar_entrenador');
         Route::post('delete-teachers', [TeacherCacheController::class, 'destroy'])->middleware('check.permiso:eliminar_entrenador');
+
+        //padres de alumnos
+        // Route::apiResource('parents', ParentCacheController::class)->only(['index']);
+        Route::get('parentsByClub/{club_id}', [ParentCacheController::class, 'showByCLub']);
+
+        //alumnos
+        Route::get('studensByClub/{club_id}', [StudentCacheController::class, 'showByCLub']);
 
         //configuraciones
         Route::apiResource('configuraciones', ConfigController::class)->only(['index', 'update'])->middleware('check.permiso:editar_configuracion');

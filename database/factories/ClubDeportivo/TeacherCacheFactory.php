@@ -34,7 +34,7 @@ class TeacherCacheFactory extends Factory
 
         // Devuelve un array con los atributos necesarios
         return [
-            'rol_usuario_id' => UserRole::factory()->create(['rol_id' => 2, 'club_id' => 1])->id,
+            // 'rol_usuario_id' => UserRole::factory()->create(['rol_id' => 2, 'club_id' => 1])->id,
             'calificacion' => $this->faker->randomFloat(1, 0, 5),
             'numero_calificaciones' => $this->faker->numberBetween(0, 100),
             'filosofia' => json_encode([$this->faker->sentence()]), // Genera un JSON con una oración corta

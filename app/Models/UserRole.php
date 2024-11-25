@@ -57,11 +57,11 @@ class UserRole extends Model
 
     public function studentCache()
     {
-        return $this->hasOne(StudentCache::class);
+        return $this->hasOne(StudentCache::class, 'rol_usuario_id');
     }
 
     public function parentCache()
     {
-        return $this->hasOne(ParentCache::class);
+        return $this->hasOne(ParentCache::class, 'rol_usuario_id');
     }
 }
