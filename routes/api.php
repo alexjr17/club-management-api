@@ -52,8 +52,11 @@ Route::group(['middleware' => 'auth:api'], function () {
         // Route::apiResource('parents', ParentCacheController::class)->only(['index']);
         Route::get('parentsByClub/{club_id}', [ParentCacheController::class, 'showByCLub']);
 
-        //alumnos
+        //alumnos - asignar permisos correctos
+        Route::post('studens', [StudentCacheController::class, 'store']);
         Route::get('studensByClub/{club_id}', [StudentCacheController::class, 'showByCLub']);
+        Route::post('delete-studens', [StudentCacheController::class, 'destroy']);
+        Route::post('update-studens', [StudentCacheController::class, 'update']);
 
         //configuraciones
         Route::apiResource('configuraciones', ConfigController::class)->only(['index', 'update'])->middleware('check.permiso:editar_configuracion');

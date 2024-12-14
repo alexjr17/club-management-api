@@ -30,6 +30,11 @@ class UserRole extends Model
         'club_id' => 'required|exists:clubes,id',
     ];
 
+    protected $hidden = [
+        'updated_at',
+        'deleted_at'
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'usuario_id');
