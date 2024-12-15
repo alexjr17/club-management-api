@@ -16,8 +16,8 @@ class StudentCache extends Model
     protected $fillable = ['rol_usuario_id', 'padre_rol_usuario_id'];
 
     public static $rules = [
-        'rol_usuario_id' => 'required|exists:rol_usuario,id',
-        'padre_rol_usuario_id' => 'nullable|exists:rol_usuario,id',
+        // 'rol_usuario_id' => 'required|exists:roles,id',
+        // 'padre_rol_usuario_id' => 'nullable|exists:usuarios,id',
     ];
 
     protected $casts = [

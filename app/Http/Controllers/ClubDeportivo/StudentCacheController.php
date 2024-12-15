@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class StudentCacheController extends Controller
 {
@@ -30,8 +33,6 @@ class StudentCacheController extends Controller
         $search = $request->input("query");
         $is_active = $request->input("is_active");
         $date = $request->input("date");
-        $especialidad = $request->input("especialidad");
-        $calificacionMinima = $request->input("calificacion_minima");
 
         $query = UserRole::with([
             'user',
@@ -42,6 +43,40 @@ class StudentCacheController extends Controller
             })
             ->where('club_id', $clubId);
 
+        if (!empty($search)) {
+            $query->whereHas('user', function ($queryBuilder) use ($search) {
+                $queryBuilder->where('nombre', 'like', "%{$search}%")
+                    ->orWhere('apellido', 'like', "%{$search}%")
+                    ->orWhere('numero_documento', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($is_active) && ($is_active == 'true' || $is_active == 'false')) {
+            $query->whereHas('user', function ($queryBuilder) use ($is_active) {
+                $queryBuilder->where('estado', $is_active == 'true' ? 1 : 0);
+            });
+        }
+
+        if (!empty($date)) {
+            $query->whereHas('user', function ($queryBuilder) use ($date) {
+                $queryBuilder->where('created_at', '>=', $date);
+            });
+        }
+
+        // Ordenamiento
+        if ($request->has("orderBy")) {
+            $orderBy = $request->orderBy;
+            if (in_array($orderBy, ['nombre', 'apellido', 'cedula'])) {
+                $query->orderBy(User::select($orderBy)
+                    ->whereColumn('usuarios.id', 'roles_usuarios.usuario_id')
+                    ->limit(1), $sortType);
+            } else {
+                $query->orderBy($orderBy, $sortType);
+            }
+        } else {
+            $query->orderBy('created_at', $sortType);
+        }
+
         $parents = $query->paginate($limit);
 
         return response()->json($parents);
@@ -50,34 +85,34 @@ class StudentCacheController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
 
-        // $validator = Validator::make($request->all(), array_merge(StudentCache::$rules, User::$rules));
-        // if ($validator->fails()) return response()->json(['message' => $validator->errors()->first(), 'code' => 400], 400);
-        $request->validate(array_merge(StudentCache::$rules, User::$rules)); //validar campos
+        $validator = Validator::make($request->all(), array_merge(StudentCache::$rules, User::$rules));
+        if ($validator->fails()) return response()->json(['message' => $validator->errors()->first(), 'code' => 400], 400);
+        // $request->validate(array_merge(/*StudentCache::$rules,*/User::$rules)); //validar campos
+
 
         DB::beginTransaction();
-
         try {
 
-            $rutaImagen = $this->procesarImagen($request->file('foto'));
+            // $rutaImagen = $this->procesarImagen($request->file('foto'));
             $request_user = $request->only(['nombre', 'apellido', 'tipo_documento', 'numero_documento', 'email']);
 
-            $request_user['foto'] = $rutaImagen;
+            // $request_user['foto'] = $rutaImagen;
             $request_user['password'] = Hash::make($request_user['numero_documento']);
 
-            // return response()->json($request_user);
             $user = User::create($request_user);
 
 
             $roles_user = UserRole::create([
                 'usuario_id' => $user->id,
-                'rol_id' => 2, //rol 2 para crear profesor
+                'rol_id' => 3, //rol 2 para crear profesor
                 'club_id' => $request->club_id
             ]);
 
-            $request_Teacher = $request->only(['filosofia', 'especializaciones']);
+            $request_Teacher = $request->only(['padre_rol_usuario_id', 'rol_usuario_id']);
+            $request_Teacher["padre_rol_usuario_id"] = 62;
             $request_Teacher["rol_usuario_id"] = $roles_user->id;
             $profesor_cache = StudentCache::create($request_Teacher);
 
@@ -231,5 +266,20 @@ class StudentCacheController extends Controller
                 'code' => 500
             ], 500);
         }
+    }
+
+    private function procesarImagen($nuevaImagen, $imagenAnterior = null)
+    {
+        if ($nuevaImagen) {
+            // Eliminar la imagen anterior si existe
+            if ($imagenAnterior) {
+                Storage::disk('public')->delete($imagenAnterior);
+            }
+
+            $nombreImagen = time() . '_' . $nuevaImagen->getClientOriginalName();
+            return $nuevaImagen->storeAs('teachers', $nombreImagen, 'public');
+        }
+
+        return $imagenAnterior;
     }
 }
